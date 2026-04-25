@@ -25,7 +25,7 @@ jobs:
         run: npm install
 
       - name: Generate Graph
-        run: npx tsx src/main.ts
+        run: npx tsx src/scripts/generate.ts
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
           GITLAB_TOKEN: ${{ secrets.GITLAB_TOKEN }}

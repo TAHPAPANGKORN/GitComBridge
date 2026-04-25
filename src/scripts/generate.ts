@@ -1,10 +1,10 @@
 import * as fs from "fs/promises";
 import * as path from "path";
 import "dotenv/config";
-import { GitHubService } from "./services/github.service.js";
-import { GitLabService } from "./services/gitlab.service.js";
-import { mergeContributions } from "./utils/data-merger.js";
-import { generateSVG } from "./utils/svg-generator.js";
+import { GitHubService } from "../lib/services/github.service";
+import { GitLabService } from "../lib/services/gitlab.service";
+import { mergeContributions } from "../lib/utils/data-merger";
+import { generateSVG } from "../lib/utils/svg-generator";
 
 /**
  * Main workflow for the Unified Contribution Graph Generator

@@ -1,6 +1,6 @@
 import axios from "axios";
 import { format, subYears } from "date-fns";
-import { ContributionData } from "../types/index.js";
+import { ContributionData } from "@/lib/types/index";
 
 export class GitLabService {
   private token: string;
@@ -41,7 +41,7 @@ export class GitLabService {
             page: page,
           },
           headers: {
-            "PRIVATE-TOKEN": this.token,
+            "Authorization": `Bearer ${this.token}`,
           },
         });
 

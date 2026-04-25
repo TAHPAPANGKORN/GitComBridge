@@ -1,5 +1,5 @@
 import { format, subDays, startOfWeek, eachDayOfInterval } from "date-fns";
-import { ContributionData } from "../types/index.js";
+import { ContributionData } from "@/lib/types/index";
 
 const CELL_SIZE = 10;
 const CELL_GAP = 2;

@@ -1,4 +1,4 @@
-import { ContributionData } from "../types/index.js";
+import { ContributionData } from "@/lib/types/index";
 
 /**
  * Merges multiple contribution datasets into one by summing values for the same dates.

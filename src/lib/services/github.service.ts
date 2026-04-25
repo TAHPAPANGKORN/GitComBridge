@@ -1,5 +1,5 @@
 import { graphql } from "@octokit/graphql";
-import { ContributionData } from "../types/index.js";
+import { ContributionData } from "@/lib/types/index";
 
 export class GitHubService {
   private token: string;
