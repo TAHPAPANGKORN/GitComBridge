@@ -1,7 +1,9 @@
 import { ContributionData } from "@/lib/types";
 import { mergeContributions } from "./data-merger";
 
-export type ThemeName = "dark" | "light" | "ocean" | "sunset" | "neon" | "dracula" | "nord";
+export type ThemeName = "dark" | "light" | "ocean" | "sunset" | "neon" | "monokai" | "sakura";
+export type CellSize = "S" | "M" | "L" | "XL";
+export type GraphLayout = "horizontal" | "vertical";
 
 interface ThemeColors {
   bg: string;
@@ -10,11 +12,9 @@ interface ThemeColors {
   github: [string, string, string, string];
   gitlab: [string, string, string, string];
   merged: [string, string, string, string];
-  glow?: string; // for neon
 }
 
 const THEMES: Record<ThemeName, ThemeColors> = {
-  // ── Free Themes ──────────────────────────────────────────────
   dark: {
     bg: "#0d1117", text: "#8b949e", empty: "#161b22",
     github:  ["#0e4429", "#006d32", "#26a641", "#39d353"],
@@ -22,12 +22,11 @@ const THEMES: Record<ThemeName, ThemeColors> = {
     merged:  ["#2d1a4d", "#4c2889", "#6b4fbb", "#9a70ff"],
   },
   light: {
-    bg: "#ffffff", text: "#57606a", empty: "#ebedf0",
+    bg: "#ffffff", text: "#475569", empty: "#ebedf0",
     github:  ["#9be9a8", "#40c463", "#30a14e", "#216e39"],
-    gitlab:  ["#ffd6d1", "#ff8a7a", "#e24329", "#a11d0a"],
-    merged:  ["#d8b4fe", "#a855f7", "#7c3aed", "#5b21b6"],
+    gitlab:  ["#fda4af", "#fb7185", "#f43f5e", "#e11d48"],
+    merged:  ["#c4b5fd", "#a78bfa", "#8b5cf6", "#7c3aed"],
   },
-  // ── Pro Themes ───────────────────────────────────────────────
   ocean: {
     bg: "#0a1628", text: "#64b5f6", empty: "#0d2137",
     github:  ["#0d3b6e", "#1565c0", "#1976d2", "#42a5f5"],
@@ -35,160 +34,210 @@ const THEMES: Record<ThemeName, ThemeColors> = {
     merged:  ["#004d40", "#00695c", "#00897b", "#26c6da"],
   },
   sunset: {
-    bg: "#1a0a0a", text: "#f48fb1", empty: "#2d1515",
-    github:  ["#7f0000", "#b71c1c", "#e53935", "#ff5252"],
-    gitlab:  ["#4a148c", "#7b1fa2", "#ab47bc", "#ce93d8"],
-    merged:  ["#e65100", "#f57c00", "#fb8c00", "#ffb74d"],
+    bg: "#1a0f0f", text: "#ff8a65", empty: "#2d1a1a",
+    github:  ["#4d2c2c", "#8d4c4c", "#c66b6b", "#ff8a8a"],
+    gitlab:  ["#4a1a15", "#812a1d", "#b53523", "#e24329"],
+    merged:  ["#5d4037", "#795548", "#8d6e63", "#a1887f"],
   },
   neon: {
-    bg: "#000000", text: "#00ff41", empty: "#0a0a0a",
-    github:  ["#003300", "#006600", "#00bb00", "#00ff41"],
-    gitlab:  ["#330033", "#660066", "#bb00bb", "#ff00ff"],
-    merged:  ["#003333", "#006666", "#00bbbb", "#00ffff"],
-    glow: "0 0 6px",
+    bg: "#000000", text: "#00ff00", empty: "#111111",
+    github:  ["#003300", "#006600", "#009900", "#00ff00"],
+    gitlab:  ["#330000", "#660000", "#990000", "#ff0000"],
+    merged:  ["#330033", "#660066", "#990099", "#ff00ff"],
   },
-  dracula: {
-    bg: "#282a36", text: "#6272a4", empty: "#3d3f4e",
-    github:  ["#1e5128", "#2ea44f", "#3fb950", "#56d364"],
-    gitlab:  ["#6272a4", "#bd93f9", "#ff79c6", "#ff92df"],
-    merged:  ["#44475a", "#6272a4", "#8be9fd", "#caa9fa"],
+  monokai: {
+    bg: "#272822", text: "#f8f8f2", empty: "#3e3d32",
+    github:  ["#2d3e42", "#3e5b61", "#4ea5b8", "#66d9ef"],
+    gitlab:  ["#422d35", "#613e4a", "#b84e72", "#f92672"],
+    merged:  ["#42402d", "#615d3e", "#b8ae4e", "#e6db74"],
   },
-  nord: {
-    bg: "#2e3440", text: "#4c566a", empty: "#3b4252",
-    github:  ["#2d4a1e", "#3d6b2a", "#4e8c37", "#a3be8c"],
-    gitlab:  ["#3b2a3b", "#5a3d5c", "#7e5a81", "#b48ead"],
-    merged:  ["#2a3f4f", "#3b5c73", "#4c7d9a", "#81a1c1"],
-  },
+  sakura: {
+    bg: "#ffffff", text: "#c2185b", empty: "#fce4ec",
+    github:  ["#f8bbd0", "#f06292", "#e91e63", "#c2185b"],
+    gitlab:  ["#ffccbc", "#ff8a65", "#f4511e", "#bf360c"],
+    merged:  ["#e1bee7", "#ba68c8", "#9c27b0", "#7b1fa2"],
+  }
 };
+
+const CELL_SIZES: Record<CellSize, number> = {
+  S: 7,
+  M: 10,
+  L: 15,
+  XL: 22,
+};
+
+export interface SVGOptions {
+  theme?: ThemeName;
+  weeks?: number;
+  cellSize?: CellSize;
+  layout?: GraphLayout;
+  title?: string;
+  hideWatermark?: boolean;
+}
 
 export function generateSVG(
   githubData: ContributionData,
   gitlabData: ContributionData,
-  theme: ThemeName = "dark",
-  userTier: "free" | "pro" = "free"   // ← Server passes this, never trust client
+  options: SVGOptions = {},
+  userTier: "free" | "pro" = "free"
 ): string {
-  // Silently enforce tier server-side (already validated in API route, but defense-in-depth)
-  const resolvedTheme: ThemeName =
-    (theme === "dark" || theme === "light") ? theme
-    : userTier === "pro" ? theme
-    : "dark";
+  const isPro = userTier === "pro";
+  
+  const theme = (options.theme && isPro) || options.theme === "dark" || options.theme === "light" 
+    ? (options.theme as ThemeName) 
+    : "light";
+  const weeks = isPro ? (options.weeks || 52) : 52;
+  const cellSizeVal = isPro ? CELL_SIZES[options.cellSize || "M"] : CELL_SIZES.L;
+  const layout = isPro ? (options.layout || "horizontal") : "horizontal";
+  const title = isPro ? (options.title || "") : "";
+  const hideWatermark = isPro && options.hideWatermark;
 
-  const colors = THEMES[resolvedTheme];
+  const colors = THEMES[theme] || THEMES.light;
+  const gap = Math.max(2, Math.round(cellSizeVal * 0.2));
+  
+  const isVertical = layout === "vertical";
+  const leftPadding = isVertical ? 75 : 40; // More space for months in vertical
+  const topPadding = title ? 60 : 40;
+  const footerHeight = isVertical ? 65 : 40; // Taller footer for vertical
+  const watermarkHeight = (!hideWatermark && !isPro) ? 15 : 0;
+  
+  const mainWidth = isVertical ? (7 * (cellSizeVal + gap) + 10) : (weeks * (cellSizeVal + gap) + 10);
+  const mainHeight = isVertical ? (weeks * (cellSizeVal + gap) + 10) : (7 * (cellSizeVal + gap) + 10);
+  
+  const width = mainWidth + leftPadding + 40;
+  const height = mainHeight + topPadding + footerHeight + watermarkHeight;
 
-  mergeContributions(githubData, glDataWrapper(gitlabData)); // merge for type check
+  const contributions = mergeContributions(githubData, gitlabData);
+  const maxVal = Math.max(...Object.values(contributions), 1);
 
-  const getLevelColor = (count: number, type: "github" | "gitlab" | "merged"): string => {
-    if (count === 0) return colors.empty;
-    const level = count >= 10 ? 3 : count >= 6 ? 2 : count >= 3 ? 1 : 0;
-    return colors[type][level];
+  const getLevel = (count: number) => {
+    if (count === 0) return 0;
+    if (count <= Math.ceil(maxVal * 0.25)) return 1;
+    if (count <= Math.ceil(maxVal * 0.5)) return 2;
+    if (count <= Math.ceil(maxVal * 0.75)) return 3;
+    return 4;
   };
 
-  const cellSize = 10;
-  const gap = 2;
-  const leftPadding = 30;
-  const topPadding = 30;
-  const width = 53 * (cellSize + gap) + leftPadding + 20;
-  const graphHeight = 7 * (cellSize + gap) + topPadding + 10;
-  const watermarkHeight = userTier === "free" ? 14 : 0;
-  const footerHeight = 35;
-  const totalHeight = graphHeight + footerHeight + watermarkHeight;
+  const getCellColor = (date: string) => {
+    const count = contributions[date] || 0;
+    if (count === 0) return colors.empty;
+    const level = getLevel(count) - 1;
+    if (gitlabData[date] && githubData[date]) return colors.merged[level];
+    if (gitlabData[date]) return colors.gitlab[level];
+    return colors.github[level];
+  };
 
+  let gridItems = "";
   const now = new Date();
+  const dayOfWeek = now.getDay();
   const startDate = new Date();
-  startDate.setDate(now.getDate() - 365);
-  startDate.setDate(startDate.getDate() - startDate.getDay());
+  startDate.setDate(now.getDate() - (weeks * 7) + (6 - dayOfWeek));
 
-  const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-  let monthLabels = "";
-  let lastMonth = -1;
-
-  const dayLabels = `
-    <text x="10" y="${topPadding + (cellSize + gap) * 1 + 8}" class="text day-label">Mon</text>
-    <text x="10" y="${topPadding + (cellSize + gap) * 3 + 8}" class="text day-label">Wed</text>
-    <text x="10" y="${topPadding + (cellSize + gap) * 5 + 8}" class="text day-label">Fri</text>
-  `;
-
-  let cells = "";
-  for (let col = 0; col < 53; col++) {
-    const colDate = new Date(startDate);
-    colDate.setDate(startDate.getDate() + col * 7);
-
-    if (colDate.getMonth() !== lastMonth) {
-      monthLabels += `<text x="${col * (cellSize + gap) + leftPadding}" y="20" class="text month-label">${months[colDate.getMonth()]}</text>`;
-      lastMonth = colDate.getMonth();
-    }
-
-    for (let row = 0; row < 7; row++) {
-      const currentDate = new Date(colDate);
-      currentDate.setDate(colDate.getDate() + row);
-      if (currentDate > now) continue;
-
+  for (let w = 0; w < weeks; w++) {
+    for (let d = 0; d < 7; d++) {
+      const currentDate = new Date(startDate);
+      currentDate.setDate(startDate.getDate() + (w * 7) + d);
       const dateStr = currentDate.toISOString().split("T")[0];
-      const ghCount = githubData[dateStr] || 0;
-      const glCount = gitlabData[dateStr] || 0;
-      const totalCount = ghCount + glCount;
-
-      let color = colors.empty;
-      if (ghCount > 0 && glCount > 0) color = getLevelColor(totalCount, "merged");
-      else if (ghCount > 0) color = getLevelColor(ghCount, "github");
-      else if (glCount > 0) color = getLevelColor(glCount, "gitlab");
-
-      const glowAttr = colors.glow ? ` filter="url(#neon-glow)"` : "";
-      cells += `<rect x="${col * (cellSize + gap) + leftPadding}" y="${row * (cellSize + gap) + topPadding}" width="${cellSize}" height="${cellSize}" fill="${color}" rx="2"${color !== colors.empty ? glowAttr : ""} />`;
+      
+      const x = isVertical ? leftPadding + d * (cellSizeVal + gap) : leftPadding + w * (cellSizeVal + gap);
+      const y = isVertical ? topPadding + w * (cellSizeVal + gap) : topPadding + d * (cellSizeVal + gap);
+      const color = getCellColor(dateStr);
+      gridItems += `<rect x="${x}" y="${y}" width="${cellSizeVal}" height="${cellSizeVal}" fill="${color}" rx="${Math.max(1, cellSizeVal * 0.12)}" />\n`;
     }
   }
 
-  // Watermark for free tier (defense-in-depth)
-  const watermark = userTier === "free"
-    ? `<text x="${width / 2}" y="${totalHeight - 3}" text-anchor="middle" 
-        font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" 
-        font-size="8" fill="${colors.text}" opacity="0.5">
-        gitcombrigde.vercel.app
-      </text>`
-    : "";
+  let labels = "";
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const days = ["Mon", "Wed", "Fri"];
+  
+  if (isVertical) {
+    // Days Header (Narrow)
+    days.forEach((day, i) => {
+      const x = leftPadding + (i * 2 + 1) * (cellSizeVal + gap);
+      labels += `<text x="${x + cellSizeVal/2}" y="${topPadding - 8}" font-size="8" fill="${colors.text}" text-anchor="middle" font-weight="bold">${day}</text>\n`;
+    });
 
-  // Neon glow filter
-  const neonFilter = resolvedTheme === "neon" ? `
-    <defs>
-      <filter id="neon-glow" x="-20%" y="-20%" width="140%" height="140%">
-        <feGaussianBlur stdDeviation="1.5" result="blur"/>
-        <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-      </filter>
-    </defs>` : "";
+    // Vertical Month Labels
+    let lastMonth = -1;
+    for (let w = 0; w < weeks; w++) {
+      const currentDate = new Date(startDate);
+      currentDate.setDate(startDate.getDate() + (w * 7));
+      const month = currentDate.getMonth();
+      if (month !== lastMonth) {
+        const y = topPadding + w * (cellSizeVal + gap) + (cellSizeVal * 0.7);
+        labels += `<text x="${leftPadding - 15}" y="${y}" font-size="9" fill="${colors.text}" text-anchor="end" font-weight="bold">${months[month]}</text>\n`;
+        lastMonth = month;
+      }
+    }
+  } else {
+    days.forEach((day, i) => {
+      const y = topPadding + (i * 2 + 1) * (cellSizeVal + gap) + (cellSizeVal * 0.7);
+      labels += `<text x="${leftPadding - 10}" y="${y}" font-size="9" fill="${colors.text}" text-anchor="end" font-weight="bold">${day}</text>\n`;
+    });
 
-  return `<svg width="${width}" height="${totalHeight}" viewBox="0 0 ${width} ${totalHeight}" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <rect width="${width}" height="${totalHeight}" fill="${colors.bg}" rx="8" />
-    ${neonFilter}
-    <style>
-      .text { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; font-size: 9px; font-weight: 600; fill: ${colors.text}; }
-      .month-label { font-weight: 400; }
-      .day-label { font-weight: 400; }
-      .label-small { font-size: 8px; font-weight: 400; }
-    </style>
-    ${monthLabels}
-    ${dayLabels}
-    ${cells}
-    <!-- Legend -->
-    <g transform="translate(${leftPadding}, ${graphHeight + footerHeight - 15})">
-      <rect width="8" height="8" fill="${colors.github[2]}" rx="1" />
-      <text x="12" y="7" class="text label-small">GitHub</text>
-      <rect x="55" width="8" height="8" fill="${colors.gitlab[2]}" rx="1" />
-      <text x="67" y="7" class="text label-small">GitLab</text>
-      <rect x="110" width="8" height="8" fill="${colors.merged[2]}" rx="1" />
-      <text x="122" y="7" class="text label-small">Merged</text>
-      <g transform="translate(${53 * (cellSize + gap) - 100}, 0)">
-        <text x="-25" y="7" class="text label-small">Less</text>
-        <rect x="-5" width="8" height="8" fill="${colors.empty}" rx="1" />
-        <rect x="5" width="8" height="8" fill="${colors.github[1]}" rx="1" />
-        <rect x="15" width="8" height="8" fill="${colors.github[2]}" rx="1" />
-        <rect x="25" width="8" height="8" fill="${colors.github[3]}" rx="1" />
-        <text x="38" y="7" class="text label-small">More</text>
+    let lastMonth = -1;
+    for (let w = 0; w < weeks; w++) {
+      const currentDate = new Date(startDate);
+      currentDate.setDate(startDate.getDate() + (w * 7));
+      const month = currentDate.getMonth();
+      if (month !== lastMonth) {
+        const x = leftPadding + w * (cellSizeVal + gap);
+        labels += `<text x="${x}" y="${topPadding - 10}" font-size="9" fill="${colors.text}" font-weight="bold">${months[month]}</text>\n`;
+        lastMonth = month;
+      }
+    }
+  }
+
+  const neonFilter = theme === "neon" ? `<defs><filter id="neon-glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2" result="blur" /><feComposite in="SourceGraphic" in2="blur" operator="over" /></filter></defs>` : "";
+
+  return `
+    <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">
+      <style>@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&amp;display=swap'); text { font-family: 'Inter', sans-serif; }</style>
+      ${neonFilter}
+      <rect width="100%" height="100%" fill="${colors.bg}" rx="8" />
+      ${title ? `<text x="20" y="35" font-size="18" font-weight="900" fill="${colors.text}">${title}</text>` : ""}
+      <g ${theme === "neon" ? 'filter="url(#neon-glow)"' : ""}>${gridItems}</g>
+      ${labels}
+      
+      <g transform="translate(${leftPadding}, ${height - footerHeight - watermarkHeight + 15})">
+        ${isVertical ? `
+          <!-- Vertical Layout Footer: Spaced Out -->
+          <g>
+            <text x="0" y="5" font-size="8" fill="${colors.text}" font-weight="bold">GH</text>
+            <rect x="18" y="-4" width="8" height="8" fill="${colors.github[3]}" rx="1.5" />
+            
+            <text x="40" y="5" font-size="8" fill="${colors.text}" font-weight="bold">GL</text>
+            <rect x="58" y="-4" width="8" height="8" fill="${colors.gitlab[3]}" rx="1.5" />
+            
+            <text x="80" y="5" font-size="8" fill="${colors.text}" font-weight="bold">MG</text>
+            <rect x="98" y="-4" width="8" height="8" fill="${colors.merged[3]}" rx="1.5" />
+          </g>
+          <g transform="translate(0, 25)">
+            <text x="0" y="5" font-size="8" fill="${colors.text}" opacity="0.5">Less</text>
+            <rect x="25" y="-4" width="8" height="8" fill="${colors.empty}" rx="1.5" />
+            <rect x="35" y="-4" width="8" height="8" fill="${colors.github[1]}" rx="1.5" />
+            <rect x="45" y="-4" width="8" height="8" fill="${colors.github[3]}" rx="1.5" />
+            <text x="60" y="5" font-size="8" fill="${colors.text}" opacity="0.5">More</text>
+          </g>
+        ` : `
+          <!-- Horizontal Layout Footer -->
+          <text x="0" y="10" font-size="9" fill="${colors.text}" font-weight="bold">GitHub</text>
+          <rect x="35" y="2" width="8" height="8" fill="${colors.github[3]}" rx="2" />
+          <text x="60" y="10" font-size="9" fill="${colors.text}" font-weight="bold">GitLab</text>
+          <rect x="95" y="2" width="8" height="8" fill="${colors.gitlab[3]}" rx="2" />
+          <text x="120" y="10" font-size="9" fill="${colors.text}" font-weight="bold">Merged</text>
+          <rect x="155" y="2" width="8" height="8" fill="${colors.merged[3]}" rx="2" />
+          
+          <g transform="translate(${mainWidth - 85}, 0)">
+            <text x="0" y="10" font-size="8" fill="${colors.text}" opacity="0.5">Less</text>
+            <rect x="25" y="2" width="8" height="8" fill="${colors.empty}" rx="1.5" />
+            <rect x="35" y="2" width="8" height="8" fill="${colors.github[1]}" rx="1.5" />
+            <rect x="45" y="2" width="8" height="8" fill="${colors.github[3]}" rx="1.5" />
+            <text x="60" y="10" font-size="8" fill="${colors.text}" opacity="0.5">More</text>
+          </g>
+        `}
       </g>
-    </g>
-    ${watermark}
-  </svg>`;
-}
-
-function glDataWrapper(data: any) {
-  return data || {};
+      ${!isPro ? `<text x="${width / 2}" y="${height - 10}" font-size="8" fill="${colors.text}" opacity="0.3" text-anchor="middle">Powered by GitComBridge</text>` : ""}
+    </svg>
+  `;
 }

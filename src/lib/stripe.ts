@@ -5,7 +5,7 @@ if (!process.env.STRIPE_SECRET_KEY) {
 }
 
 export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: "2024-06-20",
+  apiVersion: "2026-04-22.dahlia" as any,
   typescript: true,
 });
 
@@ -18,8 +18,8 @@ export const THEME_TIER: Record<string, "free" | "pro"> = {
   ocean:   "pro",
   sunset:  "pro",
   neon:    "pro",
-  dracula: "pro",
-  nord:    "pro",
+  monokai: "pro",
+  sakura:  "pro",
 };
 
 /** Verify if a user has access to a given theme */

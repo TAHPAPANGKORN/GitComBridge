@@ -3,7 +3,7 @@
 import { Navbar } from "@/components/Navbar";
 import { UpgradeModal } from "@/components/UpgradeModal";
 import { useLanguage } from "@/lib/contexts/LanguageContext";
-import { useTheme } from "@/lib/contexts/ThemeContext";
+
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   ShieldCheck, 
@@ -48,24 +48,37 @@ const GitLabIcon = () => (
 
 export default function Home() {
   const { t } = useLanguage();
-  const { theme } = useTheme();
+
   const { data: session } = useSession();
   
   const [baseUrl, setBaseUrl] = useState("");
   const [generatedUrl, setGeneratedUrl] = useState("");
   const [isExpanded, setIsExpanded] = useState(false);
-  const [previewTheme, setPreviewTheme] = useState<string>('dark');
+  const [previewTheme, setPreviewTheme] = useState<string>('light');
   const [isLoading, setIsLoading] = useState(true);
   const [copied, setCopied] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [accountStatus, setAccountStatus] = useState<{ github: boolean; gitlab: boolean; tier: 'free' | 'pro' }>({ github: false, gitlab: false, tier: 'free' });
+  
+  // Pro Settings States
+  const [weeks, setWeeks] = useState(52);
+  const [cellSize, setCellSize] = useState<string>("L");
+  const [layout, setLayout] = useState<string>("horizontal");
+  const [customTitle, setCustomTitle] = useState("");
+  const [showStats, setShowStats] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [lastModified, setLastModified] = useState(Date.now());
+
+  // Track changes to refresh preview
+  useEffect(() => {
+    setLastModified(Date.now());
+  }, [weeks, cellSize, layout, customTitle, previewTheme, showStats]);
 
   useEffect(() => {
-    setPreviewTheme(theme);
     if (typeof window !== "undefined") {
       setBaseUrl(window.location.origin);
     }
-  }, [theme]);
+  }, []);
 
   const [codeStyle, setCodeStyle] = useState<'markdown' | 'html' | 'link'>('markdown');
 
@@ -94,11 +107,22 @@ export default function Home() {
   const getFinalUrl = (pTheme: string, customName?: string) => {
     if (!baseUrl) return null;
     const name = customName || (session?.user?.name ? encodeURIComponent(session.user.name) : "demo");
-    return `${baseUrl}/api/graph/${name}?theme=${pTheme}&t=${Date.now()}`;
+    const endpoint = showStats ? "stats" : "graph";
+    
+    let url = `${baseUrl}/api/${endpoint}/${name}?theme=${pTheme}`;
+    
+    if (!showStats) {
+      if (weeks !== 52) url += `&weeks=${weeks}`;
+      if (cellSize !== "M") url += `&cellSize=${cellSize}`;
+      if (layout !== "horizontal") url += `&layout=${layout}`;
+      if (customTitle) url += `&title=${encodeURIComponent(customTitle)}`;
+    }
+    
+    return `${url}&t=${lastModified}`;
   };
 
   const getFormattedCode = () => {
-    const url = `${generatedUrl}?theme=${previewTheme}`;
+    const url = getFinalUrl(previewTheme) || "";
     if (codeStyle === 'markdown') return `![GitComBridge Unified Graph](${url})`;
     if (codeStyle === 'html') return `<p align="center">\n  <img src="${url}" alt="GitComBridge" />\n</p>`;
     return `<p align="center">\n  <a href="${baseUrl}">\n    <img src="${url}" alt="GitComBridge" />\n  </a>\n</p>`;
@@ -277,8 +301,8 @@ export default function Home() {
                     { id: "ocean",   label: "Ocean",   color: "#0a1628", pro: true },
                     { id: "sunset",  label: "Sunset",  color: "#1a0a0a", pro: true },
                     { id: "neon",    label: "Neon",    color: "#000000", pro: true },
-                    { id: "dracula", label: "Dracula", color: "#282a36", pro: true },
-                    { id: "nord",    label: "Nord",    color: "#2e3440", pro: true },
+                    { id: "monokai", label: "Monokai", color: "#272822", pro: true },
+                    { id: "sakura",  label: "Sakura",  color: "#160912", pro: true },
                   ].map((t) => {
                     const isLocked = t.pro && accountStatus.tier !== "pro";
                     return (
@@ -334,73 +358,169 @@ export default function Home() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <div className="space-y-6">
-                    <div className="space-y-3 p-4 rounded-xl bg-blue-500/5 border border-blue-500/10">
-                      <label className="text-[10px] font-black text-blue-400 uppercase tracking-widest flex items-center gap-2">
-                        <Info className="w-3 h-3" /> {t("update_info_title")}
-                      </label>
-                      <p className="text-[10px] text-github-text/70 leading-relaxed">
-                        {t("update_info_desc")}
-                      </p>
-                    </div>
-                    <div className="space-y-3">
-                      <div className="flex p-1 bg-black/5 dark:bg-black/20 rounded-xl border border-black/5 dark:border-white/5 gap-1">
-                        {(['markdown', 'html', 'link'] as const).map((style) => (
-                          <button
-                            key={style}
-                            onClick={() => setCodeStyle(style)}
-                            className={`flex-1 py-2 text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all ${
-                              codeStyle === style 
-                              ? 'bg-gitlab-gradient text-white shadow-lg' 
-                              : 'opacity-40 hover:opacity-100'
-                            }`}
-                          >
-                            {style === 'markdown' ? 'Markdown' : style === 'html' ? 'Centered' : 'Interactive'}
-                          </button>
-                        ))}
-                      </div>
-                      <label className="text-xs font-black opacity-50 uppercase tracking-widest flex items-center gap-2"><Terminal className="w-3 h-3" /> Resulting Code</label>
-                      <div className="bg-black/5 dark:bg-black/40 rounded-xl border border-black/5 dark:border-white/5 relative group overflow-hidden min-h-[80px] flex items-center">
-                        <div className="p-5 pr-14 w-full">
-                          <code className={`text-[10px] font-mono whitespace-pre-wrap break-all leading-relaxed ${theme === 'light' ? 'text-purple-700' : 'text-purple-400'}`}>
-                            {getFormattedCode()}
-                          </code>
+                <div className="space-y-8">
+                  {/* Row 1: Settings Grid */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="space-y-6">
+                      {/* Pro Settings Panel */}
+                      <div className={`p-5 rounded-2xl border space-y-5 transition-colors ${
+                        accountStatus.tier === 'pro' 
+                          ? 'border-purple-500/20 bg-purple-500/5' 
+                          : 'border-white/5 bg-white/2'
+                      }`}>
+                        <div className="flex items-center justify-between">
+                          <label className={`text-[10px] font-black uppercase tracking-widest flex items-center gap-2 text-purple-400`}>
+                            <Sparkles className="w-3 h-3" /> Pro Customizer
+                          </label>
+                          {accountStatus.tier === 'pro' && (
+                            <button 
+                              onClick={() => { setIsRefreshing(true); setTimeout(() => setIsRefreshing(false), 2000); }}
+                              className={`text-[10px] font-bold transition-colors flex items-center gap-1.5 text-white/40 hover:text-white cursor-pointer`}
+                            >
+                              <Zap className={`w-3 h-3 ${isRefreshing ? 'animate-pulse text-yellow-400' : ''}`} /> {isRefreshing ? 'Refreshing...' : 'Force Refresh'}
+                            </button>
+                          )}
                         </div>
-                        <button 
-                          onClick={handleCopy} 
-                          className="absolute top-2 right-2 p-2.5 bg-gitlab-gradient rounded-lg shadow-lg hover:scale-105 transition-all active:scale-95 opacity-80 group-hover:opacity-100"
-                        >
-                          {copied ? <Check className="w-4 h-4 text-white" /> : <Copy className="w-4 h-4 text-white" />}
-                        </button>
+
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-1.5">
+                            <p className={`text-[9px] font-bold uppercase opacity-40`}>Custom Title</p>
+                            <input 
+                              type="text"
+                              placeholder="e.g. My Contributions"
+                              value={customTitle}
+                              onChange={(e) => accountStatus.tier === 'pro' ? setCustomTitle(e.target.value) : setShowUpgradeModal(true)}
+                              className={`w-full border rounded-lg px-3 py-2 text-xs outline-none transition-all bg-black/5 dark:bg-white/5 border-black/5 dark:border-white/10 focus:border-purple-500/50 text-current placeholder:opacity-30`}
+                            />
+                          </div>
+                          <div className="space-y-1.5">
+                            <p className={`text-[9px] font-bold uppercase opacity-40`}>Weeks</p>
+                            <select 
+                              value={weeks}
+                              onChange={(e) => accountStatus.tier === 'pro' ? setWeeks(parseInt(e.target.value)) : setShowUpgradeModal(true)}
+                              className={`w-full border rounded-lg px-3 py-2 text-xs outline-none cursor-pointer transition-all bg-black/5 dark:bg-white/5 border-black/5 dark:border-white/10 text-current`}
+                            >
+                              <option value={26}>26 Weeks (Half Year)</option>
+                              <option value={52}>52 Weeks (Standard)</option>
+                              <option value={104}>104 Weeks (2 Years)</option>
+                            </select>
+                          </div>
+                          <div className="space-y-1.5">
+                            <p className={`text-[9px] font-bold uppercase opacity-40`}>Layout</p>
+                            <select 
+                              value={layout}
+                              onChange={(e) => accountStatus.tier === 'pro' ? setLayout(e.target.value) : setShowUpgradeModal(true)}
+                              className={`w-full border rounded-lg px-3 py-2 text-xs outline-none cursor-pointer transition-all bg-black/5 dark:bg-white/5 border-black/5 dark:border-white/10 text-current`}
+                            >
+                              <option value="horizontal">Horizontal (Normal)</option>
+                              <option value="vertical">Vertical (Sidebar)</option>
+                            </select>
+                          </div>
+                          <div className="space-y-1.5">
+                            <p className={`text-[9px] font-bold uppercase opacity-40`}>Cell Size</p>
+                            <div className="flex gap-1">
+                              {["S", "M", "L", "XL"].map(s => (
+                                <button 
+                                  key={s}
+                                  onClick={() => accountStatus.tier === 'pro' ? setCellSize(s) : setShowUpgradeModal(true)}
+                                  className={`flex-1 py-1.5 rounded-md text-[10px] font-bold border transition-all cursor-pointer ${
+                                    cellSize === s 
+                                      ? 'bg-purple-500/20 border-purple-500/50 text-purple-600 dark:text-purple-300'
+                                      : 'bg-black/5 dark:bg-white/5 border-black/5 dark:border-white/10 opacity-50 hover:opacity-100 text-current'
+                                  }`}
+                                >
+                                  {s}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                          <div className="space-y-1.5 col-span-2">
+                            <p className={`text-[9px] font-bold uppercase opacity-40`}>Output Mode</p>
+                            <button 
+                              onClick={() => accountStatus.tier === 'pro' ? setShowStats(!showStats) : setShowUpgradeModal(true)}
+                              className={`w-full py-2 rounded-lg text-[10px] font-black border transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                                showStats 
+                                  ? 'bg-gradient-to-r from-purple-500 to-blue-500 border-none text-white shadow-md' 
+                                  : 'bg-black/5 dark:bg-white/5 border-black/5 dark:border-white/10 opacity-50 text-current hover:opacity-100'
+                              }`}
+                            >
+                              {showStats ? <Sparkles className="w-3 h-3" /> : <Layout className="w-3 h-3" />}
+                              {showStats ? 'STATS CARD' : 'CONTRIBUTION GRAPH'}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="space-y-6">
+                      <div className={`p-5 rounded-2xl border flex flex-col h-full transition-colors border-white/5 bg-white/2`}>
+                        <div className="space-y-6 flex-1">
+                          <div className="space-y-4">
+                            <label className="text-[10px] font-black opacity-50 uppercase tracking-widest flex items-center gap-2">
+                              {t("export_title") || "Export Mode"}
+                            </label>
+                            <div className="flex bg-black/5 dark:bg-white/10 p-1 rounded-xl border border-black/5 dark:border-white/10">
+                              {['markdown', 'html', 'link'].map((style) => (
+                                <button
+                                  key={style}
+                                  onClick={() => setCodeStyle(style as any)}
+                                  className={`flex-1 py-2 text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all cursor-pointer ${
+                                    codeStyle === style 
+                                      ? 'bg-gradient-to-r from-gitlab-orange to-gitlab-purple text-white shadow-lg' 
+                                      : 'text-gray-500 dark:text-current opacity-40 hover:bg-black/5 dark:hover:bg-white/5'
+                                  }`}
+                                >
+                                  {style}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div className="space-y-3">
+                            <label className={`text-[10px] font-black uppercase tracking-widest flex items-center gap-2 opacity-50`}>
+                              <Terminal className="w-3 h-3" /> {t("result_title") || "Resulting Code"}
+                            </label>
+                            <div className="relative group">
+                              <pre className={`p-5 pr-16 rounded-xl font-mono text-[10px] border overflow-x-auto min-h-[90px] flex items-center transition-colors bg-black/5 dark:bg-black/40 text-purple-600 dark:text-gitlab-purple border-black/5 dark:border-white/10`}>
+                                <code>{getFormattedCode()}</code>
+                              </pre>
+                              <button 
+                                onClick={handleCopy}
+                                className={`absolute top-2.5 right-2.5 p-2.5 rounded-lg transition-all active:scale-95 border backdrop-blur-sm shadow-sm bg-white/5 border-white/5 text-gray-400 hover:bg-white/10 hover:text-white cursor-pointer`}
+                              >
+                                {copied ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
+                              </button>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <label className="text-xs font-black opacity-50 uppercase tracking-widest flex items-center gap-2"><Maximize2 className="w-3 h-3" /> Visual Output</label>
-                    <div 
-                      className={`glass-card p-4 flex items-center justify-center min-h-[180px] cursor-zoom-in relative group transition-all overflow-hidden border-black/5 ${previewTheme === 'light' ? 'bg-[#f6f8fa]' : 'bg-[#0d1117]'}`}
-                      onClick={() => setIsExpanded(true)}
-                    >
-                      <AnimatePresence>
-                        {isLoading && (
-                          <motion.div 
-                            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                            className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-background/50 backdrop-blur-[2px]"
-                          >
-                            <Loader2 className="w-8 h-8 animate-spin text-gitlab-orange" />
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                        {getFinalUrl(previewTheme) && (
-                          <img 
-                            src={getFinalUrl(previewTheme) as string} 
-                            alt="Preview" 
-                            onLoad={() => setIsLoading(false)}
-                            className={`max-w-full h-auto shadow-sm transition-opacity duration-300 ${isLoading ? 'opacity-0' : 'opacity-100'}`}
-                          />
-                        )}
+                  {/* Row 2: Full Width Visual Output */}
+                  <div className="space-y-4 pt-4 border-t border-white/5">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-black opacity-50 uppercase tracking-widest flex items-center gap-2">
+                        <Maximize2 className="w-3 h-3" /> Visual Output
+                      </label>
+                      <span className="text-[10px] font-bold text-purple-400/60 uppercase">Real-time Preview</span>
+                    </div>
+                    
+                    <div className="glass-card p-8 flex items-center justify-center min-h-[350px] relative transition-all overflow-hidden border-black/5 dark:border-white/5 bg-black/5 dark:bg-[#0d1117]">
+                      {isLoading && (
+                        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/40 backdrop-blur-[2px]">
+                          <Loader2 className="w-8 h-8 animate-spin text-purple-500" />
+                          <p className="mt-2 text-[10px] font-bold text-purple-400 uppercase tracking-widest animate-pulse">Generating SVG...</p>
+                        </div>
+                      )}
+                      
+                      <div className="w-full flex justify-center z-10">
+                        <img 
+                          src={getFinalUrl(previewTheme) as string} 
+                          alt="Preview" 
+                          onLoad={() => setIsLoading(false)}
+                          className={`max-w-full h-auto drop-shadow-2xl transition-all duration-500 hover:scale-[1.01] ${isLoading ? 'opacity-0' : 'opacity-100'} rounded-lg border border-white/5`}
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -451,30 +571,6 @@ export default function Home() {
             </div>
           </div>
 
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            className="mt-16 p-8 glass-card bg-gitlab-gradient/5 border-gitlab-gradient/10 rounded-3xl"
-          >
-            <div className="flex flex-col md:flex-row items-center gap-8">
-              <div className="flex-1 space-y-4">
-                <h4 className="text-2xl font-black flex items-center gap-3">
-                  <GitHubIcon /> {t("pro_tip_title")}
-                </h4>
-                <p className="text-sm opacity-70 leading-relaxed">
-                  {t("pro_tip_desc")}
-                </p>
-                <div className="bg-black/40 p-4 rounded-xl font-mono text-xs text-green-400 border border-white/5">
-                  &lt;p align="center"&gt;<br />
-                  &nbsp;&nbsp;&lt;img src="URL_HERE" alt="GitComBridge" /&gt;<br />
-                  &lt;/p&gt;
-                </div>
-              </div>
-              <div className="hidden md:block">
-                <ExternalLink className="w-20 h-20 opacity-10" />
-              </div>
-            </div>
-          </motion.div>
         </div>
       </section>
 
