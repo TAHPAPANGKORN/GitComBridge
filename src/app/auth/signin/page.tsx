@@ -17,12 +17,16 @@ const GitLabIcon = () => (
   </svg>
 );
 
+import { useLanguage } from "@/lib/contexts/LanguageContext";
+
 export default function SignIn() {
+  const { t } = useLanguage();
+
   return (
     <main className="min-h-screen bg-github-bg grid-bg flex flex-col items-center justify-center p-4">
       <Link href="/" className="absolute top-8 left-8 flex items-center gap-2 text-sm text-github-text hover:text-white transition-colors group">
         <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-        Back to Home
+        {t("how_it_works") === "มันทำงานอย่างไร?" ? "กลับหน้าหลัก" : "Back to Home"}
       </Link>
 
       <motion.div 
@@ -34,8 +38,8 @@ export default function SignIn() {
           <div className="w-16 h-16 bg-gitlab-gradient rounded-2xl mx-auto flex items-center justify-center text-white mb-6 shadow-2xl shadow-purple-500/20">
             <ShieldCheck className="w-8 h-8" />
           </div>
-          <h1 className="text-3xl font-black mb-2">Welcome Back</h1>
-          <p className="text-github-text opacity-60">Authorize to manage your unified graph</p>
+          <h1 className="text-3xl font-black mb-2">{t("cta_get_started")}</h1>
+          <p className="text-github-text opacity-60">{t("step1_desc")}</p>
         </div>
 
         <div className="glass-card p-8 space-y-4">
@@ -62,9 +66,15 @@ export default function SignIn() {
           </div>
         </div>
 
-        <p className="mt-8 text-center text-xs text-github-text/30 px-8">
-          By signing in, you agree to our terms of service and acknowledge that your tokens are securely encrypted.
-        </p>
+        <div className="mt-8 text-center space-y-2">
+          <p className="text-xs text-github-text/30 px-8">
+            {t("footer_legal")}
+          </p>
+          <div className="flex justify-center gap-4 text-[10px] uppercase tracking-widest font-bold opacity-30">
+            <Link href="/terms" className="hover:opacity-100 transition-opacity underline">{t("terms_title")}</Link>
+            <Link href="/privacy" className="hover:opacity-100 transition-opacity underline">{t("privacy_title")}</Link>
+          </div>
+        </div>
       </motion.div>
     </main>
   );

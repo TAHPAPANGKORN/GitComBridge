@@ -24,9 +24,10 @@ import {
   ExternalLink,
   Layout,
   PlayCircle,
-  Eye
+  Eye,
+  AlertTriangle
 } from "lucide-react";
-import { signIn, useSession } from "next-auth/react";
+import { signIn, signOut, useSession } from "next-auth/react";
 import { useState, useEffect } from "react";
 
 // Brand SVGs
@@ -458,8 +459,12 @@ export default function Home() {
              <img src="/logo.png" alt="Logo" className="w-10 h-10 object-contain rounded-xl shadow-lg" />
              <span className="font-black text-xl tracking-tight">GitComBridge</span>
            </div>
-           <p className="text-[10px] uppercase tracking-[0.2em]">Crafted with passion for developers (Papangkorn PJ.)</p>
-           <a href="https://github.com/tahpapangkorn" target="_blank" className="flex items-center gap-2"><GitHubIcon /> GitHub</a>
+            <p className="text-[10px] uppercase tracking-[0.2em]">Crafted with passion for developers (Papangkorn PJ.)</p>
+            <div className="flex items-center gap-6 text-[10px] uppercase tracking-widest font-bold">
+               <a href="/terms" className="hover:text-white transition-colors">Terms</a>
+               <a href="/privacy" className="hover:text-white transition-colors">Privacy</a>
+               <a href="https://github.com/tahpapangkorn" target="_blank" className="flex items-center gap-2 hover:text-white transition-colors"><GitHubIcon /> GitHub</a>
+            </div>
         </div>
       </footer>
     </main>
