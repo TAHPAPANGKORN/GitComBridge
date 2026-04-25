@@ -431,7 +431,10 @@ export default function Home() {
       {/* Footer */}
       <footer className="py-20 border-t border-black/5 bg-black/5">
         <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-10 opacity-50">
-           <div className="flex items-center gap-3"><div className="w-10 h-10 bg-gitlab-gradient rounded-xl flex items-center justify-center font-black text-white text-xs">UG</div><span className="font-black text-xl">UnifiedGraph</span></div>
+           <div className="flex items-center gap-3">
+             <img src="/logo.png" alt="Logo" className="w-10 h-10 object-contain rounded-xl shadow-lg" />
+             <span className="font-black text-xl tracking-tight">GitComBridge</span>
+           </div>
            <p className="text-[10px] uppercase tracking-[0.2em]">Crafted with passion for developers (Papangkorn PJ.)</p>
            <a href="https://github.com/tahpapangkorn" target="_blank" className="flex items-center gap-2"><GitHubIcon /> GitHub</a>
         </div>

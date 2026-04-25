@@ -3,6 +3,7 @@
 import { useLanguage } from "@/lib/contexts/LanguageContext";
 import { useTheme } from "@/lib/contexts/ThemeContext";
 import { Globe, LogOut, Moon, Sun } from "lucide-react";
+import Link from "next/link";
 import { signOut, useSession } from "next-auth/react";
 
 export function Navbar() {
@@ -13,12 +14,18 @@ export function Navbar() {
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 border-b border-white/5 bg-background/80 backdrop-blur-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-gitlab-gradient rounded-lg flex items-center justify-center font-bold text-white">
-            UG
+        <Link href="/" className="flex items-center gap-3 group">
+          <div className="relative w-10 h-10 group-hover:scale-110 transition-all duration-300">
+            <img 
+              src="/logo.png" 
+              alt="GitComBridge Logo" 
+              className="w-full h-full object-contain rounded-xl shadow-lg shadow-gitlab-purple/20" 
+            />
           </div>
-          <span className="font-bold text-lg hidden sm:block">UnifiedGraph</span>
-        </div>
+          <span className="font-black text-xl tracking-tight bg-gradient-to-r from-current to-current/50 bg-clip-text">
+            GitComBridge
+          </span>
+        </Link>
 
         <div className="flex items-center gap-2">
           <button 
