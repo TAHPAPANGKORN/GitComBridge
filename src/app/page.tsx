@@ -1,6 +1,7 @@
 "use client";
 
 import { Navbar } from "@/components/Navbar";
+import { UpgradeModal } from "@/components/UpgradeModal";
 import { useLanguage } from "@/lib/contexts/LanguageContext";
 import { useTheme } from "@/lib/contexts/ThemeContext";
 import { motion, AnimatePresence } from "framer-motion";
@@ -25,7 +26,9 @@ import {
   Layout,
   PlayCircle,
   Eye,
-  AlertTriangle
+  AlertTriangle,
+  Lock,
+  Sparkles
 } from "lucide-react";
 import { signIn, signOut, useSession } from "next-auth/react";
 import { useState, useEffect } from "react";
@@ -51,10 +54,11 @@ export default function Home() {
   const [baseUrl, setBaseUrl] = useState("");
   const [generatedUrl, setGeneratedUrl] = useState("");
   const [isExpanded, setIsExpanded] = useState(false);
-  const [previewTheme, setPreviewTheme] = useState<'dark' | 'light'>('dark');
+  const [previewTheme, setPreviewTheme] = useState<string>('dark');
   const [isLoading, setIsLoading] = useState(true);
   const [copied, setCopied] = useState(false);
-  const [accountStatus, setAccountStatus] = useState<{ github: boolean, gitlab: boolean }>({ github: false, gitlab: false });
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [accountStatus, setAccountStatus] = useState<{ github: boolean; gitlab: boolean; tier: 'free' | 'pro' }>({ github: false, gitlab: false, tier: 'free' });
 
   useEffect(() => {
     setPreviewTheme(theme);
@@ -87,7 +91,7 @@ export default function Home() {
     }
   }, [session, baseUrl]);
 
-  const getFinalUrl = (pTheme: 'dark' | 'light', customName?: string) => {
+  const getFinalUrl = (pTheme: string, customName?: string) => {
     if (!baseUrl) return null;
     const name = customName || (session?.user?.name ? encodeURIComponent(session.user.name) : "demo");
     return `${baseUrl}/api/graph/${name}?theme=${pTheme}&t=${Date.now()}`;
@@ -265,19 +269,41 @@ export default function Home() {
                   <div className="w-3 h-3 rounded-full bg-yellow-500/50" />
                   <div className="w-3 h-3 rounded-full bg-green-500/50" />
                 </div>
-                <div className="flex gap-2 p-1 bg-black/5 dark:bg-black/20 rounded-lg">
-                  <button 
-                    onClick={() => { setPreviewTheme('dark'); setIsLoading(true); }} 
-                    className={`px-3 py-1.5 rounded flex items-center gap-1.5 text-xs font-bold transition-all ${previewTheme === 'dark' ? 'bg-white/10 dark:bg-white/20 text-current' : 'opacity-40'}`}
-                  >
-                    <Moon className="w-3 h-3" /> Dark
-                  </button>
-                  <button 
-                    onClick={() => { setPreviewTheme('light'); setIsLoading(true); }} 
-                    className={`px-3 py-1.5 rounded flex items-center gap-1.5 text-xs font-bold transition-all ${previewTheme === 'light' ? 'bg-white dark:bg-white/20 text-black dark:text-white' : 'opacity-40'}`}
-                  >
-                    <Sun className="w-3 h-3" /> Light
-                  </button>
+                {/* Theme Picker */}
+                <div className="flex items-center gap-2 flex-wrap">
+                  {[
+                    { id: "dark",    label: "Dark",    color: "#0d1117", pro: false },
+                    { id: "light",   label: "Light",   color: "#ffffff", pro: false },
+                    { id: "ocean",   label: "Ocean",   color: "#0a1628", pro: true },
+                    { id: "sunset",  label: "Sunset",  color: "#1a0a0a", pro: true },
+                    { id: "neon",    label: "Neon",    color: "#000000", pro: true },
+                    { id: "dracula", label: "Dracula", color: "#282a36", pro: true },
+                    { id: "nord",    label: "Nord",    color: "#2e3440", pro: true },
+                  ].map((t) => {
+                    const isLocked = t.pro && accountStatus.tier !== "pro";
+                    return (
+                      <button
+                        key={t.id}
+                        onClick={() => {
+                          if (isLocked) { setShowUpgradeModal(true); return; }
+                          setPreviewTheme(t.id); setIsLoading(true);
+                        }}
+                        title={isLocked ? `${t.label} — Pro only` : t.label}
+                        className={`relative flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-bold transition-all border ${
+                          previewTheme === t.id
+                            ? "border-purple-500/60 bg-purple-500/10 text-purple-300"
+                            : isLocked
+                            ? "border-white/5 opacity-50 cursor-pointer hover:opacity-80"
+                            : "border-white/10 hover:border-white/20"
+                        }`}
+                      >
+                        <span className="w-3 h-3 rounded-full border border-white/20 shrink-0" style={{ background: t.color }} />
+                        {t.label}
+                        {isLocked && <Lock className="w-2.5 h-2.5 text-yellow-400" />}
+                        {t.pro && accountStatus.tier === "pro" && <Sparkles className="w-2.5 h-2.5 text-purple-400" />}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -461,12 +487,15 @@ export default function Home() {
            </div>
             <p className="text-[10px] uppercase tracking-[0.2em]">Crafted with passion for developers (Papangkorn PJ.)</p>
             <div className="flex items-center gap-6 text-[10px] uppercase tracking-widest font-bold">
-               <a href="/terms" className="hover:text-white transition-colors">Terms</a>
+                <a href="/terms" className="hover:text-white transition-colors">Terms</a>
                <a href="/privacy" className="hover:text-white transition-colors">Privacy</a>
                <a href="https://github.com/tahpapangkorn" target="_blank" className="flex items-center gap-2 hover:text-white transition-colors"><GitHubIcon /> GitHub</a>
             </div>
         </div>
       </footer>
+
+      {/* Upgrade Modal */}
+      <UpgradeModal isOpen={showUpgradeModal} onClose={() => setShowUpgradeModal(false)} />
     </main>
   );
 }
