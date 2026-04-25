@@ -287,14 +287,14 @@ export default function Home() {
         <div className="max-w-5xl mx-auto space-y-12">
           {session ? (
             <motion.div initial={{ opacity: 0, y: 40 }} whileInView={{ opacity: 1, y: 0 }} className="glass-card overflow-hidden shadow-2xl border-white/10 dark:border-white/5">
-              <div className="bg-white/5 px-6 py-4 border-b border-white/10 flex items-center justify-between">
-                <div className="flex gap-1.5">
+              <div className="bg-white/5 px-6 py-4 border-b border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="flex gap-1.5 self-start sm:self-auto">
                   <div className="w-3 h-3 rounded-full bg-red-500/50" />
                   <div className="w-3 h-3 rounded-full bg-yellow-500/50" />
                   <div className="w-3 h-3 rounded-full bg-green-500/50" />
                 </div>
                 {/* Theme Picker */}
-                <div className="flex items-center gap-2 flex-wrap">
+                <div className="grid grid-cols-3 xs:grid-cols-4 sm:flex sm:flex-wrap items-center justify-center sm:justify-end gap-1.5 w-full sm:w-auto">
                   {[
                     { id: "dark",    label: "Dark",    color: "#0d1117", pro: false },
                     { id: "light",   label: "Light",   color: "#ffffff", pro: false },
@@ -313,7 +313,7 @@ export default function Home() {
                           setPreviewTheme(t.id); setIsLoading(true);
                         }}
                         title={isLocked ? `${t.label} — Pro only` : t.label}
-                        className={`relative flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-bold transition-all border ${
+                        className={`relative flex items-center justify-center sm:justify-start gap-1.5 px-2 py-1.5 rounded-lg text-[9px] font-bold transition-all border ${
                           previewTheme === t.id
                             ? "border-purple-500/60 bg-purple-500/10 text-purple-300"
                             : isLocked
@@ -321,10 +321,10 @@ export default function Home() {
                             : "border-white/10 hover:border-white/20"
                         }`}
                       >
-                        <span className="w-3 h-3 rounded-full border border-white/20 shrink-0" style={{ background: t.color }} />
-                        {t.label}
-                        {isLocked && <Lock className="w-2.5 h-2.5 text-yellow-400" />}
-                        {t.pro && accountStatus.tier === "pro" && <Sparkles className="w-2.5 h-2.5 text-purple-400" />}
+                        <span className="w-2.5 h-2.5 rounded-full border border-white/20 shrink-0" style={{ background: t.color }} />
+                        <span className="truncate">{t.label}</span>
+                        {isLocked && <Lock className="w-2 h-2 text-yellow-400 shrink-0" />}
+                        {t.pro && accountStatus.tier === "pro" && <Sparkles className="w-2 h-2 text-purple-400 shrink-0" />}
                       </button>
                     );
                   })}
@@ -363,11 +363,22 @@ export default function Home() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div className="space-y-6">
                       {/* Pro Settings Panel */}
-                      <div className={`p-5 rounded-2xl border space-y-5 transition-colors ${
+                      <div className={`p-5 rounded-2xl border space-y-5 transition-colors relative group/pro ${
                         accountStatus.tier === 'pro' 
                           ? 'border-purple-500/20 bg-purple-500/5' 
                           : 'border-white/5 bg-white/2'
                       }`}>
+                        {accountStatus.tier !== 'pro' && (
+                          <div 
+                            onClick={() => setShowUpgradeModal(true)}
+                            className="absolute h-full inset-0 z-10 flex flex-col items-center justify-center bg-black/60 backdrop-blur-md rounded-2xl cursor-pointer group-hover/pro:bg-black/70 transition-all border border-white/5"
+                          >
+                            <div className="w-12 h-12 rounded-full bg-purple-500/20 border border-purple-500/30 flex items-center justify-center mb-3 shadow-2xl shadow-purple-500/40 animate-pulse">
+                              <Lock className="w-5 h-5 text-purple-400" />
+                            </div>
+                            <span className="text-[10px] font-black text-purple-400 uppercase tracking-[0.2em] drop-shadow-lg">Unlock Pro Features</span>
+                          </div>
+                        )}
                         <div className="flex items-center justify-between">
                           <label className={`text-[10px] font-black uppercase tracking-widest flex items-center gap-2 text-purple-400`}>
                             <Sparkles className="w-3 h-3" /> Pro Customizer
@@ -390,15 +401,17 @@ export default function Home() {
                               placeholder="e.g. My Contributions"
                               value={customTitle}
                               onChange={(e) => accountStatus.tier === 'pro' ? setCustomTitle(e.target.value) : setShowUpgradeModal(true)}
-                              className={`w-full border rounded-lg px-3 py-2 text-xs outline-none transition-all bg-black/5 dark:bg-white/5 border-black/5 dark:border-white/10 focus:border-purple-500/50 text-current placeholder:opacity-30`}
+                              disabled={accountStatus.tier !== 'pro'}
+                              className={`w-full border rounded-lg px-3 py-2 text-xs outline-none transition-all bg-black/5 dark:bg-white/5 border-black/5 dark:border-white/10 focus:border-purple-500/50 text-current placeholder:opacity-30 ${accountStatus.tier !== 'pro' ? 'cursor-not-allowed opacity-50' : ''}`}
                             />
                           </div>
                           <div className="space-y-1.5">
                             <p className={`text-[9px] font-bold uppercase opacity-40`}>Weeks</p>
                             <select 
                               value={weeks}
+                              disabled={accountStatus.tier !== 'pro'}
                               onChange={(e) => accountStatus.tier === 'pro' ? setWeeks(parseInt(e.target.value)) : setShowUpgradeModal(true)}
-                              className={`w-full border rounded-lg px-3 py-2 text-xs outline-none cursor-pointer transition-all bg-black/5 dark:bg-white/5 border-black/5 dark:border-white/10 text-current`}
+                              className={`w-full border rounded-lg px-3 py-2 text-xs outline-none cursor-pointer transition-all bg-black/5 dark:bg-white/5 border-black/5 dark:border-white/10 text-current ${accountStatus.tier !== 'pro' ? 'cursor-not-allowed opacity-50' : ''}`}
                             >
                               <option value={26}>26 Weeks (Half Year)</option>
                               <option value={52}>52 Weeks (Standard)</option>
@@ -409,8 +422,9 @@ export default function Home() {
                             <p className={`text-[9px] font-bold uppercase opacity-40`}>Layout</p>
                             <select 
                               value={layout}
+                              disabled={accountStatus.tier !== 'pro'}
                               onChange={(e) => accountStatus.tier === 'pro' ? setLayout(e.target.value) : setShowUpgradeModal(true)}
-                              className={`w-full border rounded-lg px-3 py-2 text-xs outline-none cursor-pointer transition-all bg-black/5 dark:bg-white/5 border-black/5 dark:border-white/10 text-current`}
+                              className={`w-full border rounded-lg px-3 py-2 text-xs outline-none cursor-pointer transition-all bg-black/5 dark:bg-white/5 border-black/5 dark:border-white/10 text-current ${accountStatus.tier !== 'pro' ? 'cursor-not-allowed opacity-50' : ''}`}
                             >
                               <option value="horizontal">Horizontal (Normal)</option>
                               <option value="vertical">Vertical (Sidebar)</option>
@@ -422,12 +436,13 @@ export default function Home() {
                               {["S", "M", "L", "XL"].map(s => (
                                 <button 
                                   key={s}
+                                  disabled={accountStatus.tier !== 'pro'}
                                   onClick={() => accountStatus.tier === 'pro' ? setCellSize(s) : setShowUpgradeModal(true)}
                                   className={`flex-1 py-1.5 rounded-md text-[10px] font-bold border transition-all cursor-pointer ${
                                     cellSize === s 
                                       ? 'bg-purple-500/20 border-purple-500/50 text-purple-600 dark:text-purple-300'
                                       : 'bg-black/5 dark:bg-white/5 border-black/5 dark:border-white/10 opacity-50 hover:opacity-100 text-current'
-                                  }`}
+                                  } ${accountStatus.tier !== 'pro' ? 'cursor-not-allowed' : ''}`}
                                 >
                                   {s}
                                 </button>
@@ -437,12 +452,13 @@ export default function Home() {
                           <div className="space-y-1.5 col-span-2">
                             <p className={`text-[9px] font-bold uppercase opacity-40`}>Output Mode</p>
                             <button 
+                              disabled={accountStatus.tier !== 'pro'}
                               onClick={() => accountStatus.tier === 'pro' ? setShowStats(!showStats) : setShowUpgradeModal(true)}
                               className={`w-full py-2 rounded-lg text-[10px] font-black border transition-all flex items-center justify-center gap-2 cursor-pointer ${
                                 showStats 
                                   ? 'bg-gradient-to-r from-purple-500 to-blue-500 border-none text-white shadow-md' 
                                   : 'bg-black/5 dark:bg-white/5 border-black/5 dark:border-white/10 opacity-50 text-current hover:opacity-100'
-                              }`}
+                              } ${accountStatus.tier !== 'pro' ? 'cursor-not-allowed' : ''}`}
                             >
                               {showStats ? <Sparkles className="w-3 h-3" /> : <Layout className="w-3 h-3" />}
                               {showStats ? 'STATS CARD' : 'CONTRIBUTION GRAPH'}
