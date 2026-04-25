@@ -1,40 +1,58 @@
+@import "tailwindcss";
+@config "../../tailwind.config.ts";
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #0d1117;
+  --foreground: #c9d1d9;
+  --card-bg: rgba(255, 255, 255, 0.05);
+  --border: rgba(255, 255, 255, 0.1);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* Light Mode Overrides */
+.light {
+  --background: #f6f8fa;
+  --foreground: #24292f;
+  --card-bg: rgba(255, 255, 255, 0.8);
+  --border: rgba(0, 0, 0, 0.1);
 }
 
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  margin: 0;
-  padding: 0;
+  font-family: 'Inter', 'Noto Sans Thai', sans-serif;
+  overflow-x: hidden;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-.container {
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 2rem;
-}
-
-.card {
-  border: 1px solid #eaeaea;
-  border-radius: 8px;
-  padding: 1.5rem;
-  background: white;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-}
-
-@media (prefers-color-scheme: dark) {
-  .card {
-    background: #1a1a1a;
-    border-color: #333;
+@layer components {
+  .glass-card {
+    background: var(--card-bg);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--border);
+    @apply rounded-xl;
   }
+  
+  .btn-gradient {
+    @apply bg-gitlab-gradient text-white font-bold py-3 px-6 rounded-lg transition-all hover:scale-105 active:scale-95 shadow-lg;
+  }
+  
+  .btn-outline {
+    border: 1px solid var(--border);
+    @apply hover:bg-white/5 text-current font-bold py-3 px-6 rounded-lg transition-colors;
+  }
+}
+
+.grid-bg {
+  background-image: 
+    linear-gradient(to right, var(--border) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--border) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+.skeleton {
+  @apply bg-white/5 animate-pulse rounded-lg;
+}
+
+.light .skeleton {
+  @apply bg-black/5;
 }

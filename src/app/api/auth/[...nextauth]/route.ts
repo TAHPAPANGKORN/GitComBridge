@@ -23,6 +23,9 @@ export const authOptions: NextAuthOptions = {
       allowDangerousEmailAccountLinking: true,
     }),
   ],
+  pages: {
+    signIn: "/auth/signin",
+  },
   callbacks: {
     async session({ session, user }) {
       if (session.user) {
