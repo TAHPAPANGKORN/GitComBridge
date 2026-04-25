@@ -31,7 +31,7 @@ const translations = {
     tut_step3: "3. Update Your README",
     tut_desc3: "Paste the code into your GitHub Profile README.md and you're done!",
     pro_tip_title: "Pro Tip: GitHub Profile README",
-    pro_tip_desc: "To center your graph on your profile, wrap the Markdown code in an HTML <p align=\"center\"> tag:",
+    pro_tip_desc: "To center your graph on your profile, use the HTML <img> tag inside a <p align=\"center\"> tag instead of standard Markdown:",
     update_info_title: "Auto-Update & Caching",
     update_info_desc: "Your graph updates automatically. Note: GitHub may cache the image for up to 1 hour. If it doesn't change immediately, please wait a bit.",
   },
@@ -55,7 +55,7 @@ const translations = {
     tut_step3: "3. อัปเดต README ของคุณ",
     tut_desc3: "นำ Code ไปวางในไฟล์ README.md ของ GitHub Profile เป็นอันเสร็จสิ้น!",
     pro_tip_title: "เทคนิคพิเศษ: สำหรับ GitHub Profile README",
-    pro_tip_desc: "หากต้องการจัดกราฟให้อยู่กึ่งกลางโปรไฟล์ ให้ใช้ Tag HTML <p align=\"center\"> ครอบโค้ด Markdown ดังนี้:",
+    pro_tip_desc: "หากต้องการจัดกราฟให้อยู่กึ่งกลางโปรไฟล์ ให้ใช้ Tag HTML <img> ครอบด้วย <p align=\"center\"> แทนการใช้ Markdown ปกติ:",
     update_info_title: "การอัปเดตและระบบแคช",
     update_info_desc: "กราฟจะอัปเดตอัตโนมัติทุกครั้งที่มีคนเข้าชมโปรไฟล์ของคุณ หมายเหตุ: GitHub อาจจำภาพเก่าไว้ (Cache) ประมาณ 1 ชั่วโมง หาก Commit แล้วกราฟยังไม่เปลี่ยนทันที",
   }

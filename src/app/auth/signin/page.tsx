@@ -41,7 +41,7 @@ export default function SignIn() {
         <div className="glass-card p-8 space-y-4">
           <button 
             onClick={() => signIn("github", { callbackUrl: "/#generator" })}
-            className="w-full bg-[#24292e] hover:bg-[#2f363d] text-white py-4 px-6 rounded-xl font-bold flex items-center justify-center gap-3 transition-all active:scale-95 border border-white/5"
+            className="cursor-pointer w-full bg-[#24292e] hover:bg-[#2f363d] text-white py-4 px-6 rounded-xl font-bold flex items-center justify-center gap-3 transition-all active:scale-95 border border-white/5"
           >
             <GitHubIcon />
             Sign in with GitHub
@@ -49,7 +49,7 @@ export default function SignIn() {
 
           <button 
             onClick={() => signIn("gitlab", { callbackUrl: "/#generator" })}
-            className="w-full bg-[#e24329] hover:bg-[#fc6d26] text-white py-4 px-6 rounded-xl font-bold flex items-center justify-center gap-3 transition-all active:scale-95 border border-white/5"
+            className="cursor-pointer w-full bg-[#e24329] hover:bg-[#fc6d26] text-white py-4 px-6 rounded-xl font-bold flex items-center justify-center gap-3 transition-all active:scale-95 border border-white/5"
           >
             <GitLabIcon />
             Sign in with GitLab

@@ -62,6 +62,8 @@ export default function Home() {
     }
   }, [theme]);
 
+  const [codeStyle, setCodeStyle] = useState<'markdown' | 'html' | 'link'>('markdown');
+
   useEffect(() => {
     const fetchStatus = async () => {
       try {
@@ -90,9 +92,15 @@ export default function Home() {
     return `${baseUrl}/api/graph/${name}?theme=${pTheme}&t=${Date.now()}`;
   };
 
+  const getFormattedCode = () => {
+    const url = `${generatedUrl}?theme=${previewTheme}`;
+    if (codeStyle === 'markdown') return `![GitComBridge Unified Graph](${url})`;
+    if (codeStyle === 'html') return `<p align="center">\n  <img src="${url}" alt="GitComBridge" />\n</p>`;
+    return `<p align="center">\n  <a href="${baseUrl}">\n    <img src="${url}" alt="GitComBridge" />\n  </a>\n</p>`;
+  };
+
   const handleCopy = () => {
-    const markdown = `![Unified Graph](${generatedUrl}?theme=${previewTheme})`;
-    navigator.clipboard.writeText(markdown);
+    navigator.clipboard.writeText(getFormattedCode());
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -276,7 +284,7 @@ export default function Home() {
                 <div className="flex flex-col md:flex-row justify-between items-center gap-6">
                   <h2 className="text-3xl font-black">Workspace</h2>
                   <div className="flex gap-3">
-                    <button onClick={() => signIn("github")} className="p-3 glass-card hover:bg-black/5 flex items-center gap-3 transition-all relative">
+                    <button onClick={() => signIn("github")} className="p-3 glass-card hover:bg-black/5 flex items-center gap-3 transition-all relative cursor-pointer">
                       <GitHubIcon /> 
                       <div className="text-left">
                         <div className="text-[10px] font-bold opacity-50 uppercase">GitHub</div>
@@ -286,7 +294,7 @@ export default function Home() {
                         </div>
                       </div>
                     </button>
-                    <button onClick={() => signIn("gitlab")} className="p-3 glass-card hover:bg-black/5 flex items-center gap-3 transition-all relative">
+                    <button onClick={() => signIn("gitlab")} className="p-3 glass-card hover:bg-black/5 flex items-center gap-3 transition-all relative cursor-pointer">
                       <GitLabIcon />
                       <div className="text-left">
                         <div className="text-[10px] font-bold opacity-50 uppercase">GitLab</div>
@@ -309,12 +317,27 @@ export default function Home() {
                         {t("update_info_desc")}
                       </p>
                     </div>
-                    <div className="space-y-2">
-                      <label className="text-xs font-black opacity-50 uppercase tracking-widest flex items-center gap-2"><Terminal className="w-3 h-3" /> Markdown Hook</label>
-                      <div className="bg-black/5 dark:bg-black/40 rounded-xl border border-black/5 dark:border-white/5 relative group overflow-hidden">
-                        <div className="p-5 pr-14">
-                          <code className={`text-xs font-mono break-all leading-relaxed ${theme === 'light' ? 'text-purple-700' : 'text-purple-400'}`}>
-                            {`![Unified Graph](${generatedUrl}?theme=${previewTheme})`}
+                    <div className="space-y-3">
+                      <div className="flex p-1 bg-black/5 dark:bg-black/20 rounded-xl border border-black/5 dark:border-white/5 gap-1">
+                        {(['markdown', 'html', 'link'] as const).map((style) => (
+                          <button
+                            key={style}
+                            onClick={() => setCodeStyle(style)}
+                            className={`flex-1 py-2 text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all ${
+                              codeStyle === style 
+                              ? 'bg-gitlab-gradient text-white shadow-lg' 
+                              : 'opacity-40 hover:opacity-100'
+                            }`}
+                          >
+                            {style === 'markdown' ? 'Markdown' : style === 'html' ? 'Centered' : 'Interactive'}
+                          </button>
+                        ))}
+                      </div>
+                      <label className="text-xs font-black opacity-50 uppercase tracking-widest flex items-center gap-2"><Terminal className="w-3 h-3" /> Resulting Code</label>
+                      <div className="bg-black/5 dark:bg-black/40 rounded-xl border border-black/5 dark:border-white/5 relative group overflow-hidden min-h-[80px] flex items-center">
+                        <div className="p-5 pr-14 w-full">
+                          <code className={`text-[10px] font-mono whitespace-pre-wrap break-all leading-relaxed ${theme === 'light' ? 'text-purple-700' : 'text-purple-400'}`}>
+                            {getFormattedCode()}
                           </code>
                         </div>
                         <button 
@@ -416,7 +439,7 @@ export default function Home() {
                 </p>
                 <div className="bg-black/40 p-4 rounded-xl font-mono text-xs text-green-400 border border-white/5">
                   &lt;p align="center"&gt;<br />
-                  &nbsp;&nbsp;![Unified Graph](URL_HERE)<br />
+                  &nbsp;&nbsp;&lt;img src="URL_HERE" alt="GitComBridge" /&gt;<br />
                   &lt;/p&gt;
                 </div>
               </div>
