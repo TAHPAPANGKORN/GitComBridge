@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 
 export async function GET() {
@@ -22,8 +22,8 @@ export async function GET() {
       }
     });
 
-    const providers = user?.accounts.map(acc => acc.provider) || [];
-    
+    const providers = user?.accounts.map((acc: any) => acc.provider) || [];
+
     return NextResponse.json({
       github: providers.includes("github"),
       gitlab: providers.includes("gitlab")
