@@ -3,7 +3,7 @@
 import { Navbar } from "@/components/Navbar";
 import { UpgradeModal } from "@/components/UpgradeModal";
 import { useLanguage } from "@/lib/contexts/LanguageContext";
-
+import { useTheme } from "@/lib/contexts/ThemeContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   ShieldCheck, 
@@ -48,7 +48,7 @@ const GitLabIcon = () => (
 
 export default function Home() {
   const { t } = useLanguage();
-
+  const { theme } = useTheme();
   const { data: session } = useSession();
   
   const [baseUrl, setBaseUrl] = useState("");
@@ -315,15 +315,15 @@ export default function Home() {
                         title={isLocked ? `${t.label} — Pro only` : t.label}
                         className={`relative flex items-center justify-center sm:justify-start gap-1.5 px-2 py-1.5 rounded-lg text-[9px] font-bold transition-all border ${
                           previewTheme === t.id
-                            ? "border-purple-500/60 bg-purple-500/10 text-purple-300"
+                            ? "border-purple-500/60 bg-purple-500/10 text-purple-600 dark:text-purple-300"
                             : isLocked
-                            ? "border-white/5 opacity-50 cursor-pointer hover:opacity-80"
-                            : "border-white/10 hover:border-white/20"
-                        }`}
+                            ? `${theme === 'dark' ? 'border-white/5 bg-white/2 opacity-50' : 'border-black/5 bg-black/2 opacity-40'} cursor-pointer hover:opacity-80`
+                            : `${theme === 'dark' ? 'border-white/10 bg-white/5 hover:border-white/20' : 'border-black/10 bg-black/5 hover:border-black/20'}`
+                        } ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}
                       >
-                        <span className="w-2.5 h-2.5 rounded-full border border-white/20 shrink-0" style={{ background: t.color }} />
+                        <span className={`w-2.5 h-2.5 rounded-full border shrink-0 ${theme === 'dark' ? 'border-white/20' : 'border-black/10'}`} style={{ background: t.color }} />
                         <span className="truncate">{t.label}</span>
-                        {isLocked && <Lock className="w-2 h-2 text-yellow-400 shrink-0" />}
+                        {isLocked && <Lock className={`w-2 h-2 shrink-0 ${theme === 'dark' ? 'text-yellow-400' : 'text-yellow-600'}`} />}
                         {t.pro && accountStatus.tier === "pro" && <Sparkles className="w-2 h-2 text-purple-400 shrink-0" />}
                       </button>
                     );
@@ -371,12 +371,22 @@ export default function Home() {
                         {accountStatus.tier !== 'pro' && (
                           <div 
                             onClick={() => setShowUpgradeModal(true)}
-                            className="absolute h-full inset-0 z-10 flex flex-col items-center justify-center bg-black/60 backdrop-blur-md rounded-2xl cursor-pointer group-hover/pro:bg-black/70 transition-all border border-white/5"
+                            className={`absolute h-full inset-0 z-10 flex flex-col items-center justify-center backdrop-blur-md rounded-2xl cursor-pointer transition-all border ${
+                              theme === 'dark' 
+                                ? 'bg-black/60 group-hover/pro:bg-black/70 border-white/5' 
+                                : 'bg-black/10 group-hover/pro:bg-white/70 border-black/5'
+                            }`}
                           >
-                            <div className="w-12 h-12 rounded-full bg-purple-500/20 border border-purple-500/30 flex items-center justify-center mb-3 shadow-2xl shadow-purple-500/40 animate-pulse">
-                              <Lock className="w-5 h-5 text-purple-400" />
+                            <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-3 shadow-2xl animate-pulse border ${
+                              theme === 'dark'
+                                ? 'bg-purple-500/20 border-purple-500/30 shadow-purple-500/40'
+                                : 'bg-purple-500/10 border-purple-500/20 shadow-purple-500/20'
+                            }`}>
+                              <Lock className={`w-5 h-5 ${theme === 'dark' ? 'text-purple-400' : 'text-purple-600'}`} />
                             </div>
-                            <span className="text-[10px] font-black text-purple-400 uppercase tracking-[0.2em] drop-shadow-lg">Unlock Pro Features</span>
+                            <span className={`text-[10px] font-black uppercase tracking-[0.2em] drop-shadow-lg ${
+                              theme === 'dark' ? 'text-purple-400' : 'text-purple-600'
+                            }`}>Unlock Pro Features</span>
                           </div>
                         )}
                         <div className="flex items-center justify-between">
@@ -495,8 +505,8 @@ export default function Home() {
                             <label className={`text-[10px] font-black uppercase tracking-widest flex items-center gap-2 opacity-50`}>
                               <Terminal className="w-3 h-3" /> {t("result_title") || "Resulting Code"}
                             </label>
-                            <div className="relative group">
-                              <pre className={`p-5 pr-16 rounded-xl font-mono text-[10px] border overflow-x-auto min-h-[90px] flex items-center transition-colors bg-black/5 dark:bg-black/40 text-purple-600 dark:text-gitlab-purple border-black/5 dark:border-white/10`}>
+                            <div className="relative group h-20">
+                              <pre className={`p-5 pr-16 rounded-xl font-mono text-[10px] border overflow-y-scroll overflow-x-auto min-h-[90px] flex items-center transition-colors bg-black/5 dark:bg-black/40 text-purple-600 dark:text-gitlab-purple border-black/5 dark:border-white/10`}>
                                 <code>{getFormattedCode()}</code>
                               </pre>
                               <button 
