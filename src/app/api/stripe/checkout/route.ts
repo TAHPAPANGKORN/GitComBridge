@@ -37,6 +37,7 @@ export async function POST() {
         metadata: { userId: user.id },
       });
       customerId = customer.id;
+      
       await prisma.user.update({
         where: { id: user.id },
         data: { stripeCustomerId: customerId },
@@ -60,8 +61,11 @@ export async function POST() {
     });
 
     return NextResponse.json({ url: checkoutSession.url });
-  } catch (error) {
-    console.error("Stripe checkout error:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+  } catch (error: any) {
+    console.error("❌ Stripe checkout error:", error.message);
+    return NextResponse.json(
+      { error: "Internal Server Error" }, 
+      { status: 500 }
+    );
   }
 }

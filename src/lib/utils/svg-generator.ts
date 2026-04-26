@@ -9,54 +9,54 @@ interface ThemeColors {
   bg: string;
   text: string;
   empty: string;
-  github: [string, string, string, string];
-  gitlab: [string, string, string, string];
-  merged: [string, string, string, string];
+  github: [string, string, string, string, string];
+  gitlab: [string, string, string, string, string];
+  merged: [string, string, string, string, string];
 }
 
 const THEMES: Record<ThemeName, ThemeColors> = {
   dark: {
     bg: "#0d1117", text: "#8b949e", empty: "#161b22",
-    github:  ["#0e4429", "#006d32", "#26a641", "#39d353"],
-    gitlab:  ["#4a1a15", "#812a1d", "#b53523", "#e24329"],
-    merged:  ["#2d1a4d", "#4c2889", "#6b4fbb", "#9a70ff"],
+    github:  ["#0e4429", "#006d32", "#26a641", "#39d353", "#a1eba0"],
+    gitlab:  ["#4a1a15", "#812a1d", "#b53523", "#e24329", "#ff8f7e"],
+    merged:  ["#2d1a4d", "#4c2889", "#6b4fbb", "#9a70ff", "#c8b2ff"],
   },
   light: {
     bg: "#ffffff", text: "#475569", empty: "#ebedf0",
-    github:  ["#9be9a8", "#40c463", "#30a14e", "#216e39"],
-    gitlab:  ["#fda4af", "#fb7185", "#f43f5e", "#e11d48"],
-    merged:  ["#c4b5fd", "#a78bfa", "#8b5cf6", "#7c3aed"],
+    github:  ["#9be9a8", "#7bc96f", "#40c463", "#30a14e", "#216e39"],
+    gitlab:  ["#ffdfc4", "#ffb380", "#ff8c42", "#e65100", "#bf360c"],
+    merged:  ["#e9d5ff", "#c084fc", "#a855f7", "#9333ea", "#7e22ce"],
   },
   ocean: {
     bg: "#0a1628", text: "#64b5f6", empty: "#0d2137",
-    github:  ["#0d3b6e", "#1565c0", "#1976d2", "#42a5f5"],
-    gitlab:  ["#1a237e", "#283593", "#3949ab", "#5c6bc0"],
-    merged:  ["#004d40", "#00695c", "#00897b", "#26c6da"],
+    github:  ["#0d3b6e", "#1565c0", "#1976d2", "#1e88e5", "#42a5f5"],
+    gitlab:  ["#1a237e", "#283593", "#3949ab", "#5c6bc0", "#7986cb"],
+    merged:  ["#004d40", "#00695c", "#00897b", "#26c6da", "#4dd0e1"],
   },
   sunset: {
     bg: "#1a0f0f", text: "#ff8a65", empty: "#2d1a1a",
-    github:  ["#4d2c2c", "#8d4c4c", "#c66b6b", "#ff8a8a"],
-    gitlab:  ["#4a1a15", "#812a1d", "#b53523", "#e24329"],
-    merged:  ["#5d4037", "#795548", "#8d6e63", "#a1887f"],
+    github:  ["#4a2a1a", "#7a3a1a", "#a3491a", "#ff5722", "#ff7043"],
+    gitlab:  ["#4a1a1a", "#811d1d", "#b52323", "#f44336", "#ef5350"],
+    merged:  ["#2d1a4d", "#4c2889", "#6b4fbb", "#9a70ff", "#b388ff"],
   },
   neon: {
-    bg: "#000000", text: "#00ff00", empty: "#111111",
-    github:  ["#003300", "#006600", "#009900", "#00ff00"],
-    gitlab:  ["#330000", "#660000", "#990000", "#ff0000"],
-    merged:  ["#330033", "#660066", "#990099", "#ff00ff"],
+    bg: "#000000", text: "#00ffcc", empty: "#1a1a1a",
+    github:  ["#003322", "#006644", "#009966", "#00cc88", "#00ffcc"],
+    gitlab:  ["#330000", "#660000", "#990000", "#cc0000", "#ff0000"],
+    merged:  ["#220033", "#440066", "#660099", "#8800cc", "#cc00ff"],
   },
   monokai: {
     bg: "#272822", text: "#f8f8f2", empty: "#3e3d32",
-    github:  ["#2d3e42", "#3e5b61", "#4ea5b8", "#66d9ef"],
-    gitlab:  ["#422d35", "#613e4a", "#b84e72", "#f92672"],
-    merged:  ["#42402d", "#615d3e", "#b8ae4e", "#e6db74"],
+    github:  ["#4a4a1a", "#7a7a1a", "#a3a31a", "#e6db74", "#f0e68c"],
+    gitlab:  ["#4a2a1a", "#7a4a1a", "#a36a1a", "#fd971f", "#ffb347"],
+    merged:  ["#2d1a4d", "#4c2889", "#6b4fbb", "#ae81ff", "#d7beff"],
   },
   sakura: {
-    bg: "#ffffff", text: "#c2185b", empty: "#fce4ec",
-    github:  ["#f8bbd0", "#f06292", "#e91e63", "#c2185b"],
-    gitlab:  ["#ffccbc", "#ff8a65", "#f4511e", "#bf360c"],
-    merged:  ["#e1bee7", "#ba68c8", "#9c27b0", "#7b1fa2"],
-  }
+    bg: "#160912", text: "#f472b6", empty: "#2d1424",
+    github:  ["#4a1a3a", "#7a1a5a", "#a31a7a", "#ec4899", "#f472b6"],
+    gitlab:  ["#4a1a1a", "#7a1a1a", "#a31a1a", "#f43f5e", "#fb7185"],
+    merged:  ["#2d1a4d", "#4c2889", "#6b4fbb", "#d946ef", "#e879f9"],
+  },
 };
 
 const CELL_SIZES: Record<CellSize, number> = {
@@ -108,23 +108,28 @@ export function generateSVG(
   const height = mainHeight + topPadding + footerHeight + watermarkHeight;
 
   const contributions = mergeContributions(githubData, gitlabData);
-  const maxVal = Math.max(...Object.values(contributions), 1);
+  const counts = Object.values(contributions).filter(c => c > 0);
+  const maxVal = counts.length > 0 ? Math.max(...counts) : 1;
 
   const getLevel = (count: number) => {
     if (count === 0) return 0;
-    if (count <= Math.ceil(maxVal * 0.25)) return 1;
-    if (count <= Math.ceil(maxVal * 0.5)) return 2;
-    if (count <= Math.ceil(maxVal * 0.75)) return 3;
-    return 4;
+    // 5 active levels (1-5)
+    if (count <= Math.ceil(maxVal * 0.10)) return 1;
+    if (count <= Math.ceil(maxVal * 0.30)) return 2;
+    if (count <= Math.ceil(maxVal * 0.50)) return 3;
+    if (count <= Math.ceil(maxVal * 0.75)) return 4;
+    return 5;
   };
 
   const getCellColor = (date: string) => {
     const count = contributions[date] || 0;
-    if (count === 0) return colors.empty;
-    const level = getLevel(count) - 1;
-    if (gitlabData[date] && githubData[date]) return colors.merged[level];
-    if (gitlabData[date]) return colors.gitlab[level];
-    return colors.github[level];
+    const level = getLevel(count);
+    if (level === 0) return colors.empty;
+    
+    const idx = level - 1; // 0-4 index for the 5-color arrays
+    if (gitlabData[date] && githubData[date]) return colors.merged[idx];
+    if (gitlabData[date]) return colors.gitlab[idx];
+    return colors.github[idx];
   };
 
   let gridItems = "";
@@ -204,35 +209,35 @@ export function generateSVG(
           <!-- Vertical Layout Footer: Spaced Out -->
           <g>
             <text x="0" y="5" font-size="8" fill="${colors.text}" font-weight="bold">GH</text>
-            <rect x="18" y="-4" width="8" height="8" fill="${colors.github[3]}" rx="1.5" />
+            <rect x="18" y="-4" width="8" height="8" fill="${colors.github[4]}" rx="1.5" />
             
             <text x="40" y="5" font-size="8" fill="${colors.text}" font-weight="bold">GL</text>
-            <rect x="58" y="-4" width="8" height="8" fill="${colors.gitlab[3]}" rx="1.5" />
+            <rect x="58" y="-4" width="8" height="8" fill="${colors.gitlab[4]}" rx="1.5" />
             
             <text x="80" y="5" font-size="8" fill="${colors.text}" font-weight="bold">MG</text>
-            <rect x="98" y="-4" width="8" height="8" fill="${colors.merged[3]}" rx="1.5" />
+            <rect x="98" y="-4" width="8" height="8" fill="${colors.merged[4]}" rx="1.5" />
           </g>
           <g transform="translate(0, 25)">
             <text x="0" y="5" font-size="8" fill="${colors.text}" opacity="0.5">Less</text>
             <rect x="25" y="-4" width="8" height="8" fill="${colors.empty}" rx="1.5" />
             <rect x="35" y="-4" width="8" height="8" fill="${colors.github[1]}" rx="1.5" />
-            <rect x="45" y="-4" width="8" height="8" fill="${colors.github[3]}" rx="1.5" />
+            <rect x="45" y="-4" width="8" height="8" fill="${colors.github[4]}" rx="1.5" />
             <text x="60" y="5" font-size="8" fill="${colors.text}" opacity="0.5">More</text>
           </g>
         ` : `
           <!-- Horizontal Layout Footer -->
           <text x="0" y="10" font-size="9" fill="${colors.text}" font-weight="bold">GitHub</text>
-          <rect x="35" y="2" width="8" height="8" fill="${colors.github[3]}" rx="2" />
+          <rect x="35" y="2" width="8" height="8" fill="${colors.github[4]}" rx="2" />
           <text x="60" y="10" font-size="9" fill="${colors.text}" font-weight="bold">GitLab</text>
-          <rect x="95" y="2" width="8" height="8" fill="${colors.gitlab[3]}" rx="2" />
+          <rect x="95" y="2" width="8" height="8" fill="${colors.gitlab[4]}" rx="2" />
           <text x="120" y="10" font-size="9" fill="${colors.text}" font-weight="bold">Merged</text>
-          <rect x="155" y="2" width="8" height="8" fill="${colors.merged[3]}" rx="2" />
+          <rect x="155" y="2" width="8" height="8" fill="${colors.merged[4]}" rx="2" />
           
           <g transform="translate(${mainWidth - 85}, 0)">
             <text x="0" y="10" font-size="8" fill="${colors.text}" opacity="0.5">Less</text>
             <rect x="25" y="2" width="8" height="8" fill="${colors.empty}" rx="1.5" />
-            <rect x="35" y="2" width="8" height="8" fill="${colors.github[1]}" rx="1.5" />
-            <rect x="45" y="2" width="8" height="8" fill="${colors.github[3]}" rx="1.5" />
+            <rect x="35" y="2" width="8" height="8" fill="${colors.github[2]}" rx="1.5" />
+            <rect x="45" y="2" width="8" height="8" fill="${colors.github[4]}" rx="1.5" />
             <text x="60" y="10" font-size="8" fill="${colors.text}" opacity="0.5">More</text>
           </g>
         `}
