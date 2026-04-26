@@ -7,7 +7,7 @@ export class GitLabService {
   private username: string;
   private instanceUrl: string;
 
-  constructor(token: string, username: string, instanceUrl: string = "https://gitlab.com") {
+  constructor(token: string, username: string = "", instanceUrl: string = "https://gitlab.com") {
     this.token = token;
     this.username = username;
     this.instanceUrl = instanceUrl.replace(/\/$/, ""); 
@@ -18,8 +18,8 @@ export class GitLabService {
    * Optimized with Parallel Requests for speed.
    */
   async fetchContributions(): Promise<ContributionData> {
-    if (!this.token || !this.username) {
-      console.warn("GITLAB_TOKEN or GITLAB_USERNAME is missing. Skipping GitLab data collection.");
+    if (!this.token) {
+      console.warn("GITLAB_TOKEN is missing. Skipping GitLab data collection.");
       return {};
     }
 
@@ -27,8 +27,8 @@ export class GitLabService {
     const oneYearAgo = format(subYears(new Date(), 1), "yyyy-MM-dd");
     
     try {
-      // Fetch multiple pages in parallel (e.g., first 5 pages for speed)
-      const pageNumbers = [1, 2, 3, 4, 5];
+      // Fetch multiple pages in parallel (e.g., first 10 pages for better coverage)
+      const pageNumbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
       
       const pageRequests = pageNumbers.map(page => 
         axios.get(`${this.instanceUrl}/api/v4/events`, {

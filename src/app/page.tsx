@@ -420,7 +420,11 @@ export default function Home() {
                           </label>
                           {accountStatus.tier === 'pro' && (
                             <button 
-                              onClick={() => { setIsRefreshing(true); setTimeout(() => setIsRefreshing(false), 2000); }}
+                              onClick={() => { 
+                                setIsRefreshing(true); 
+                                setLastModified(Date.now());
+                                setTimeout(() => setIsRefreshing(false), 2000); 
+                              }}
                               className={`text-[10px] font-bold transition-colors flex items-center gap-1.5 text-white/40 hover:text-white cursor-pointer`}
                             >
                               <Zap className={`w-3 h-3 ${isRefreshing ? 'animate-pulse text-yellow-400' : ''}`} /> {isRefreshing ? t('refreshing') : t('force_refresh')}
