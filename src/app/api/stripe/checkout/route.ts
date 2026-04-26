@@ -4,7 +4,10 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { stripe } from "@/lib/stripe";
 
-const BASE_URL = process.env.NEXTAUTH_URL || "https://gitcombrigde.vercel.app";
+let BASE_URL = process.env.NEXTAUTH_URL || "https://gitcombrigde.vercel.app";
+if (!BASE_URL.startsWith("http")) {
+  BASE_URL = `https://${BASE_URL}`;
+}
 
 export async function POST() {
   try {
