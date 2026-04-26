@@ -322,7 +322,7 @@ export default function Home() {
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 px-1 sm:justify-end opacity-40">
                       <Sun className="w-3 h-3 text-orange-400" />
-                      <span className="text-[10px] font-black uppercase tracking-wider">Light Themes</span>
+                      <span className="text-[10px] font-black uppercase tracking-wider">{t('theme_light')}</span>
                     </div>
                     <div className="grid grid-cols-3 xs:grid-cols-4 sm:flex sm:flex-wrap gap-2 sm:justify-end">
                       {[
@@ -340,7 +340,7 @@ export default function Home() {
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 px-1 sm:justify-end opacity-40">
                       <Moon className="w-3 h-3 text-purple-400" />
-                      <span className="text-[10px] font-black uppercase tracking-wider">Dark Themes</span>
+                      <span className="text-[10px] font-black uppercase tracking-wider">{t('theme_dark')}</span>
                     </div>
                     <div className="grid grid-cols-3 xs:grid-cols-4 sm:flex sm:flex-wrap gap-2 sm:justify-end">
                       {[
@@ -358,7 +358,7 @@ export default function Home() {
 
               <div className="p-8 md:p-12 space-y-10">
                 <div className="flex flex-col md:flex-row justify-between items-center gap-6">
-                  <h2 className="text-3xl font-black">Workspace</h2>
+                  <h2 className="text-3xl font-black">{t('workspace_title')}</h2>
                   <div className="flex gap-3">
                     <button onClick={() => signIn("github")} className="p-3 glass-card hover:bg-black/5 flex items-center gap-3 transition-all relative cursor-pointer">
                       <GitHubIcon /> 
@@ -366,7 +366,7 @@ export default function Home() {
                         <div className="text-[10px] font-bold opacity-50 uppercase">GitHub</div>
                         <div className="flex items-center gap-1.5">
                           <div className={`w-1.5 h-1.5 rounded-full ${accountStatus.github ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]' : 'bg-red-500'}`} />
-                          <span className="text-xs font-black">{accountStatus.github ? 'Linked' : 'Not Linked'}</span>
+                          <span className="text-xs font-black">{accountStatus.github ? t('connected') : t('not_connected')}</span>
                         </div>
                       </div>
                     </button>
@@ -376,7 +376,7 @@ export default function Home() {
                         <div className="text-[10px] font-bold opacity-50 uppercase">GitLab</div>
                         <div className="flex items-center gap-1.5">
                           <div className={`w-1.5 h-1.5 rounded-full ${accountStatus.gitlab ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]' : 'bg-red-500'}`} />
-                          <span className="text-xs font-black">{accountStatus.gitlab ? 'Linked' : 'Not Linked'}</span>
+                          <span className="text-xs font-black">{accountStatus.gitlab ? t('connected') : t('not_connected')}</span>
                         </div>
                       </div>
                     </button>
@@ -411,26 +411,26 @@ export default function Home() {
                             </div>
                             <span className={`text-[10px] font-black uppercase tracking-[0.2em] drop-shadow-lg ${
                               theme === 'dark' ? 'text-purple-400' : 'text-purple-600'
-                            }`}>Unlock Pro Features</span>
+                            }`}>{t('upgrade_to_pro')}</span>
                           </div>
                         )}
                         <div className="flex items-center justify-between">
                           <label className={`text-[10px] font-black uppercase tracking-widest flex items-center gap-2 text-purple-400`}>
-                            <Sparkles className="w-3 h-3" /> Pro Customizer
+                            <Sparkles className="w-3 h-3" /> {t('pro_customizer')}
                           </label>
                           {accountStatus.tier === 'pro' && (
                             <button 
                               onClick={() => { setIsRefreshing(true); setTimeout(() => setIsRefreshing(false), 2000); }}
                               className={`text-[10px] font-bold transition-colors flex items-center gap-1.5 text-white/40 hover:text-white cursor-pointer`}
                             >
-                              <Zap className={`w-3 h-3 ${isRefreshing ? 'animate-pulse text-yellow-400' : ''}`} /> {isRefreshing ? 'Refreshing...' : 'Force Refresh'}
+                              <Zap className={`w-3 h-3 ${isRefreshing ? 'animate-pulse text-yellow-400' : ''}`} /> {isRefreshing ? t('refreshing') : t('force_refresh')}
                             </button>
                           )}
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">
                           <div className="space-y-1.5">
-                            <p className={`text-[9px] font-bold uppercase opacity-40`}>Custom Title</p>
+                            <p className={`text-[9px] font-bold uppercase opacity-40`}>{t('custom_title')}</p>
                             <input 
                               type="text"
                               placeholder="e.g. My Contributions"
@@ -441,16 +441,16 @@ export default function Home() {
                             />
                           </div>
                           <div className="space-y-1.5">
-                            <p className={`text-[9px] font-bold uppercase opacity-40`}>Weeks</p>
+                            <p className={`text-[9px] font-bold uppercase opacity-40`}>{t('weeks')}</p>
                             <select 
                               value={weeks}
                               disabled={accountStatus.tier !== 'pro'}
                               onChange={(e) => accountStatus.tier === 'pro' ? setWeeks(parseInt(e.target.value)) : setShowUpgradeModal(true)}
                               className={`w-full border rounded-lg px-3 py-2 text-xs outline-none cursor-pointer transition-all bg-black/5 dark:bg-white/5 border-black/5 dark:border-white/10 text-current ${accountStatus.tier !== 'pro' ? 'cursor-not-allowed opacity-50' : ''}`}
                             >
-                              <option value={26}>26 Weeks (Half Year)</option>
-                              <option value={52}>52 Weeks (Standard)</option>
-                              <option value={104}>104 Weeks (2 Years)</option>
+                              <option value={26}>{t('half_year')}</option>
+                              <option value={52}>{t('standard')}</option>
+                              <option value={104}>{t('two_years')}</option>
                             </select>
                           </div>
                           <div className="space-y-1.5">
@@ -461,12 +461,12 @@ export default function Home() {
                               onChange={(e) => accountStatus.tier === 'pro' ? setLayout(e.target.value) : setShowUpgradeModal(true)}
                               className={`w-full border rounded-lg px-3 py-2 text-xs outline-none cursor-pointer transition-all bg-black/5 dark:bg-white/5 border-black/5 dark:border-white/10 text-current ${accountStatus.tier !== 'pro' ? 'cursor-not-allowed opacity-50' : ''}`}
                             >
-                              <option value="horizontal">Horizontal (Normal)</option>
-                              <option value="vertical">Vertical (Sidebar)</option>
+                              <option value="horizontal">{t('horiz_normal')}</option>
+                              <option value="vertical">{t('vert_sidebar')}</option>
                             </select>
                           </div>
                           <div className="space-y-1.5">
-                            <p className={`text-[9px] font-bold uppercase opacity-40`}>Cell Size</p>
+                            <p className={`text-[9px] font-bold uppercase opacity-40`}>{t('cell_size')}</p>
                             <div className="flex gap-1">
                               {["S", "M", "L", "XL"].map(s => (
                                 <button 
@@ -495,7 +495,7 @@ export default function Home() {
                         <div className="space-y-4 flex flex-col h-full min-h-0">
                           <div className="space-y-4">
                             <label className="text-[10px] font-black opacity-50 uppercase tracking-widest flex items-center gap-2">
-                              {t("export_title") === "export_title" ? "Export Mode" : t("export_title")}
+                              {t("export_title")}
                             </label>
                             <div className="flex bg-black/5 dark:bg-white/10 p-1 rounded-xl border border-black/5 dark:border-white/10">
                               {['markdown', 'html', 'link'].map((style) => (
@@ -516,7 +516,7 @@ export default function Home() {
 
                           <div className="space-y-3 flex-1 flex flex-col min-h-0">
                             <label className={`text-[10px] font-black uppercase tracking-widest flex items-center gap-2 opacity-50`}>
-                              <Terminal className="w-3 h-3" /> {t("result_title") === "result_title" ? "Resulting Code" : t("result_title")}
+                              <Terminal className="w-3 h-3" /> {t("result_title")}
                             </label>
                             <div className="relative group flex-1 min-h-0">
                               <pre 
@@ -543,16 +543,16 @@ export default function Home() {
                   <div className="space-y-4 pt-4 border-t border-white/5">
                     <div className="flex items-center justify-between">
                       <label className="text-xs font-black opacity-50 uppercase tracking-widest flex items-center gap-2">
-                        <Maximize2 className="w-3 h-3" /> Visual Output
+                        <Maximize2 className="w-3 h-3" /> {t('visual_output')}
                       </label>
-                      <span className="text-[10px] font-bold text-purple-400/60 uppercase">Real-time Preview</span>
+                      <span className="text-[10px] font-bold text-purple-400/60 uppercase">{t('realtime_preview')}</span>
                     </div>
                     
                     <div className="glass-card p-8 flex items-center justify-center min-h-[350px] relative transition-all overflow-hidden border-black/5 dark:border-white/5 bg-black/5 dark:bg-[#0d1117]">
                       {isLoading && (
                         <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/40 backdrop-blur-[2px]">
                           <Loader2 className="w-8 h-8 animate-spin text-purple-500" />
-                          <p className="mt-2 text-[10px] font-bold text-purple-400 uppercase tracking-widest animate-pulse">Generating SVG...</p>
+                          <p className="mt-2 text-[10px] font-bold text-purple-400 uppercase tracking-widest animate-pulse">{t('generating_svg')}</p>
                         </div>
                       )}
                       
@@ -571,8 +571,8 @@ export default function Home() {
             </motion.div>
           ) : (
             <div className="text-center py-20">
-               <h3 className="text-4xl font-black mb-8">Ready to sync?</h3>
-               <button onClick={() => signIn()} className="btn-gradient inline-flex items-center gap-4 text-xl px-12 py-5">Get My Graph Now <ChevronRight className="w-6 h-6" /></button>
+               <h3 className="text-4xl font-black mb-8">{t('ready_to_sync')}</h3>
+               <button onClick={() => signIn()} className="btn-gradient inline-flex items-center gap-4 text-xl px-12 py-5">{t('get_my_graph')} <ChevronRight className="w-6 h-6" /></button>
             </div>
           )}
         </div>

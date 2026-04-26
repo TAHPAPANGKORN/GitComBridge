@@ -10,17 +10,52 @@ interface UpgradeModalProps {
   onClose: () => void;
 }
 
-const FEATURES = [
-  { free: "Dark & Light themes", pro: "7 Premium Themes (Neon, Monokai, Sakura...)" },
+const FEATURES_EN = [
+  { free: "Dark & Light themes", pro: "9 Premium Themes (Neon, Monokai, Matcha...)" },
   { free: "GitComBridge watermark", pro: "Remove Watermark" },
   { free: "Standard size (L)", pro: "Full size control (S, M, L, XL)" },
   { free: "Horizontal layout only", pro: "Vertical & Horizontal layouts" },
   { free: "Community support", pro: "Priority Support" },
 ];
 
+const FEATURES_TH = [
+  { free: "ธีม Dark & Light", pro: "9 ธีมพรีเมียม (Neon, Monokai, Matcha...)" },
+  { free: "มีลายน้ำ GitComBridge", pro: "ลบลายน้ำออกได้" },
+  { free: "ขนาดมาตรฐาน (L)", pro: "เลือกขนาดได้เต็มที่ (S, M, L, XL)" },
+  { free: "แนวนอนเท่านั้น", pro: "แนวนอน & แนวตั้ง" },
+  { free: "Community support", pro: "Priority Support" },
+];
+
 export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
   const { theme } = useTheme();
   const [isLoading, setIsLoading] = useState(false);
+  const [lang, setLang] = useState<"EN" | "TH">("EN");
+
+  const FEATURES = lang === "TH" ? FEATURES_TH : FEATURES_EN;
+  const txt = {
+    EN: {
+      title: "Upgrade to Pro",
+      subtitle: "Elevate your profile with premium features.",
+      currency: "USD",
+      billing: "One-time",
+      cta: "Get Lifetime Pro Access",
+      stripe: "Secure Checkout via Stripe",
+      noSub: "No Subscription",
+      oneTime: "One-time Payment",
+      secure: "Secure Payment",
+    },
+    TH: {
+      title: "อัปเกรดเป็น Pro",
+      subtitle: "ยกระดับโปรไฟล์ของคุณด้วยฟีเจอร์พรีเมียม",
+      currency: "USD",
+      billing: "จ่ายครั้งเดียว",
+      cta: "รับสิทธิ์ Pro ตลอดชีพ",
+      stripe: "ชำระเงินปลอดภัยผ่าน Stripe",
+      noSub: "ไม่มีรายเดือน",
+      oneTime: "จ่ายครั้งเดียวตลอดชีพ",
+      secure: "ชำระเงินปลอดภัย",
+    },
+  }[lang];
 
   const handleUpgrade = async () => {
     setIsLoading(true);
@@ -78,8 +113,19 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
                 </div>
               </motion.div>
               
-              <h2 className="text-2xl sm:text-3xl font-black tracking-tight">Upgrade to Pro</h2>
-              <p className="text-xs sm:text-sm opacity-50 mt-2 font-medium">Elevate your profile with premium features.</p>
+              <h2 className="text-2xl sm:text-3xl font-black tracking-tight">{txt.title}</h2>
+              <p className="text-xs sm:text-sm opacity-50 mt-2 font-medium">{txt.subtitle}</p>
+              {/* Language Toggle */}
+              <div className="flex items-center justify-center gap-1 mt-3">
+                {(["EN", "TH"] as const).map((l) => (
+                  <button key={l} onClick={() => setLang(l)}
+                    className={`px-2.5 py-0.5 rounded-md text-[9px] font-black uppercase tracking-widest transition-all border ${
+                      lang === l
+                        ? "border-purple-500/40 bg-purple-500/10 text-purple-400"
+                        : theme === "dark" ? "border-white/10 bg-white/5 opacity-40 hover:opacity-70" : "border-black/10 bg-black/5 opacity-40 hover:opacity-70"
+                    }`}>{l}</button>
+                ))}
+              </div>
             </div>
 
             {/* Price Card */}
@@ -90,8 +136,9 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
                <div className="relative flex items-baseline gap-2">
                  <span className="text-6xl sm:text-7xl font-black tracking-tighter">$9</span>
                  <div className="flex flex-col">
-                   <span className="text-xs sm:text-sm font-black text-purple-400">USD</span>
-                   <span className="text-[10px] sm:text-xs font-bold opacity-30 uppercase tracking-widest">One-time</span>
+                   <span className="text-2xl font-black tracking-tight">.99</span>
+                   <span className="text-xs sm:text-sm font-black text-purple-400">{txt.currency}</span>
+                   <span className="text-[10px] sm:text-xs font-bold opacity-30 uppercase tracking-widest">{txt.billing}</span>
                  </div>
                </div>
             </div>
@@ -143,19 +190,19 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
                   ) : (
                     <div className="flex items-center gap-3">
                       <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
-                      <span className="text-white font-black text-sm sm:text-base">Get Lifetime Pro Access</span>
+                      <span className="text-white font-black text-sm sm:text-base">{txt.cta}</span>
                     </div>
                   )}
-                  {!isLoading && <span className="text-[8px] sm:text-[9px] text-white/60 font-bold uppercase tracking-widest mt-0.5">Secure Checkout via Stripe</span>}
+                  {!isLoading && <span className="text-[8px] sm:text-[9px] text-white/60 font-bold uppercase tracking-widest mt-0.5">{txt.stripe}</span>}
                 </button>
               </div>
 
               <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 mt-4 sm:mt-6 opacity-30 text-[8px] sm:text-[9px] font-bold uppercase tracking-tighter">
-                <span>No Subscription</span>
+                <span>{txt.noSub}</span>
                 <span className="hidden sm:inline w-1 h-1 rounded-full bg-current" />
-                <span>One-time Payment</span>
+                <span>{txt.oneTime}</span>
                 <span className="hidden sm:inline w-1 h-1 rounded-full bg-current" />
-                <span>Secure Payment</span>
+                <span>{txt.secure}</span>
               </div>
             </div>
           </motion.div>
