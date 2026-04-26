@@ -25,6 +25,7 @@ model Account {
   // Extra fields for GitLab/GitHub compatibility
   created_at               Int?
   refresh_token_expires_in Int?
+  instance_url             String? @default("https://gitlab.com")
 
   // Custom fields for encrypted tokens
   encrypted_access_token   String? @db.Text

@@ -36,32 +36,43 @@ export const authOptions: NextAuthOptions = {
   },
   events: {
     async linkAccount({ account }) {
-      try {
-        if (account.access_token && (ENCRYPTION_KEY.length === 32 || ENCRYPTION_KEY.length === 64)) {
-          const encryptedAccessToken = encrypt(account.access_token, ENCRYPTION_KEY);
-          const encryptedRefreshToken = account.refresh_token 
-            ? encrypt(account.refresh_token, ENCRYPTION_KEY) 
-            : null;
-
-          await prisma.account.update({
-            where: {
-              provider_providerAccountId: {
-                provider: account.provider,
-                providerAccountId: account.providerAccountId,
-              },
-            },
-            data: {
-              encrypted_access_token: encryptedAccessToken,
-              encrypted_refresh_token: encryptedRefreshToken,
-              // 🔐 Clear plaintext tokens for security
-              access_token: null,
-              refresh_token: null,
-            },
-          });
-        }
-      } catch (error) {
-        console.error("Error in linkAccount event:", error);
+      await handleTokenEncryption(account);
+    },
+    async signIn({ account }) {
+      if (account) {
+        await handleTokenEncryption(account);
       }
     },
   },
 };
+
+async function handleTokenEncryption(account: any) {
+  try {
+    const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || "";
+    if (account.access_token && (ENCRYPTION_KEY.length === 32 || ENCRYPTION_KEY.length === 64)) {
+      const encryptedAccessToken = encrypt(account.access_token, ENCRYPTION_KEY);
+      const encryptedRefreshToken = account.refresh_token 
+        ? encrypt(account.refresh_token, ENCRYPTION_KEY) 
+        : null;
+
+      await prisma.account.update({
+        where: {
+          provider_providerAccountId: {
+            provider: account.provider,
+            providerAccountId: account.providerAccountId,
+          },
+        },
+        data: {
+          encrypted_access_token: encryptedAccessToken,
+          encrypted_refresh_token: encryptedRefreshToken,
+          // 🔐 Clear plaintext tokens for security
+          access_token: null,
+          refresh_token: null,
+          expires_at: account.expires_at,
+        },
+      });
+    }
+  } catch (error) {
+    console.error("Error in handleTokenEncryption:", error);
+  }
+}

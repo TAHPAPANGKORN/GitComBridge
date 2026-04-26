@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { GitHubService } from "@/lib/services/github.service";
 import { GitLabService } from "@/lib/services/gitlab.service";
-import { decrypt } from "@/lib/utils/encryption";
+import { refreshAccountToken } from "@/lib/utils/token-refresher";
 import { generateSVG, ThemeName, CellSize, GraphLayout } from "@/lib/utils/svg-generator";
 import { hasThemeAccess, THEME_TIER } from "@/lib/stripe";
 
@@ -102,10 +102,10 @@ export async function GET(
 
     // Fetch both platforms in parallel for maximum speed
     const fetchPromises = user.accounts.map(async (account: any) => {
-      const rawToken = account.encrypted_access_token || account.access_token;
-      if (!rawToken) return null;
+      // 🔄 Auto-refresh token if needed
+      const token = await refreshAccountToken(account);
+      if (!token) return null;
       
-      const token = decrypt(rawToken);
       if (account.provider === "github") {
         return { provider: "github", data: await new GitHubService(token).fetchContributions() };
       } else if (account.provider === "gitlab") {
