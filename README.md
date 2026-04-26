@@ -2,22 +2,22 @@
 
 [![Next.js](https://img.shields.io/badge/Next.js-15-black?style=for-the-badge&logo=next.js)](https://nextjs.org)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-v4-38bdf8?style=for-the-badge&logo=tailwind-css)](https://tailwindcss.com)
-[![NextAuth](https://img.shields.io/badge/NextAuth-v4-blueviolet?style=for-the-badge&logo=next.js)](https://next-auth.js.org)
+[![Stripe](https://img.shields.io/badge/Stripe-Payments-626cd9?style=for-the-badge&logo=stripe)](https://stripe.com)
 [![Prisma](https://img.shields.io/badge/Prisma-ORM-2d3748?style=for-the-badge&logo=prisma)](https://prisma.io)
 
 **GitComBridge** is a powerful, unified contribution graph generator that seamlessly merges your coding activity from both **GitHub** and **GitLab** into one stunning, real-time SVG visualization.
 
-<p align="center">
-  <img src="./public/logo.png" width="150" alt="GitComBridge Logo" />
-</p>
-
 ## ✨ Key Features
 
 - 🔗 **Dual-Platform Sync**: Connect both GitHub and GitLab accounts to see your complete impact.
-- 🎨 **Premium SVG Generation**: Beautiful, GitHub-style contribution squares with high-quality gradients.
-- 🌓 **Dynamic Themes**: Built-in support for Dark and Light modes.
-- ⚡ **High Performance**: Optimized with parallel API fetching and edge caching.
-- 🔐 **Security First**: AES-256-GCM encryption for all stored access tokens.
+- 🎨 **12+ Premium Themes**: From classic `dark`/`light` to `Neon`, `Monokai`, `Sakura`, and `Ocean`.
+- 📐 **Flexible Layouts**: Choose between **Horizontal** (standard) or **Vertical** (sidebar style).
+- 🛠 **Pro Customization**: Set custom titles, adjust cell sizes (S to XL), and control time ranges.
+- 💳 **PromptPay & Card Support**: Easy one-time upgrade to Pro via Stripe (Localized for Thailand).
+- 🔐 **Security First**: 
+  - **AES-256-GCM**: Industry-standard encryption for all stored access tokens.
+  - **Token Scrubbing**: Automatic removal of plaintext tokens from the database.
+  - **XSS Protection**: Full SVG entity escaping for user-generated content.
 - 🇹🇭 **Bi-lingual Support**: Full support for English and Thai languages.
 
 ## 🚀 Getting Started
@@ -26,30 +26,32 @@
 
 - Node.js 18+
 - PostgreSQL database
-- GitHub OAuth App credentials
-- GitLab OAuth Application credentials
+- GitHub OAuth App & GitLab OAuth Application
+- Stripe Account (for Pro payments)
 
 ### Environment Variables
 
-Create a `.env` file in the root directory:
+Create a `.env` file based on our requirements:
 
 ```env
-DATABASE_URL="your_postgresql_url"
+DATABASE_URL="postgresql://..."
 
 # NextAuth
 NEXTAUTH_URL="http://localhost:3000"
-NEXTAUTH_SECRET="your_secret_here"
+NEXTAUTH_SECRET="your_secret"
 
-# GitHub
-GITHUB_ID="your_github_client_id"
-GITHUB_SECRET="your_github_client_secret"
-
-# GitLab
-GITLAB_ID="your_gitlab_client_id"
-GITLAB_SECRET="your_gitlab_client_secret"
+# GitHub & GitLab OAuth
+GITHUB_ID="..."
+GITHUB_SECRET="..."
+GITLAB_ID="..."
+GITLAB_SECRET="..."
 
 # Security
-ENCRYPTION_KEY="your_32_byte_or_64_hex_key"
+ENCRYPTION_KEY="32_byte_hex_key"
+
+# Stripe (PromptPay ready)
+STRIPE_SECRET_KEY="..."
+STRIPE_WEBHOOK_SECRET="..."
 ```
 
 ### Installation
@@ -65,35 +67,30 @@ npx prisma db push
 npm run dev
 ```
 
-## 🛠 Usage
+## 📐 Parameters API
 
-Once your accounts are linked, you can embed your unified graph anywhere using our dynamic API:
+Embed your graph anywhere using our dynamic API:
 
-### Markdown Hook
-```markdown
-![Unified Graph](https://your-domain.com/api/graph/YOUR_USERNAME?theme=dark)
-```
+`![Graph](https://gitcombridge.com/api/graph/username?theme=neon&layout=vertical)`
 
-### Parameters
-| Parameter | Description | Options |
-|-----------|-------------|---------|
-| `theme`   | Visual style | `dark` (default), `light` |
-| `t`       | Cache breaker | Any timestamp string |
+| Parameter | Tier | Description | Options |
+|-----------|------|-------------|---------|
+| `theme`   | Mixed | Visual style | `dark`, `light`, `neon`, `monokai`, etc. |
+| `layout`  | Pro | Graph orientation | `horizontal` (default), `vertical` |
+| `cellSize`| Pro | Size of squares | `S`, `M`, `L`, `XL` |
+| `title`   | Pro | Custom header text | Any escaped string |
+| `weeks`   | Pro | Time range | `26`, `52`, `104` |
+| `hideWatermark` | Pro | Remove brand logo | `true` / `false` |
 
-## 📐 Architecture
+## 🛡 Security Architecture
 
-- **Frontend**: Next.js 15 (App Router), Tailwind CSS v4, Framer Motion
-- **Backend**: Next.js API Routes, NextAuth.js
-- **Database**: Prisma ORM with PostgreSQL
-- **Visualization**: Custom SVG Generator (Vanilla JS)
+1. **Encryption**: OAuth tokens are encrypted using `AES-256-GCM` before storage. The `IV` and `AuthTag` are stored to ensure data integrity.
+2. **Server-Side Validation**: All Pro parameters are validated on the server. Free users cannot bypass restrictions via URL manipulation.
+3. **SVG Sanitization**: User titles are escaped to prevent XSS attacks within SVG documents.
 
 ## 🤝 Contributing
 
 Contributions, issues, and feature requests are welcome! Feel free to check the [issues page](https://github.com/tahpapangkorn/gitcombridge/issues).
-
-## 📝 License
-
-Distributed under the MIT License. See `LICENSE` for more information.
 
 ---
 Created with ❤️ by [Papangkorn PJ.](https://github.com/tahpapangkorn)

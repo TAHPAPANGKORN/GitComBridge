@@ -29,7 +29,7 @@ export async function POST() {
     }
 
     // Reuse existing Stripe Customer or create new one
-    let customerId = user.stripeCustomerId;
+    let customerId: string | null = user.stripeCustomerId;
     if (!customerId) {
       const customer = await stripe.customers.create({
         email: user.email ?? undefined,
