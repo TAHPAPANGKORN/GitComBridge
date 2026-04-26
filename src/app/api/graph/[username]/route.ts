@@ -7,6 +7,14 @@ import { generateSVG, ThemeName, CellSize, GraphLayout } from "@/lib/utils/svg-g
 import { hasThemeAccess, THEME_TIER } from "@/lib/stripe";
 
 const VALID_THEMES = Object.keys(THEME_TIER) as ThemeName[];
+const VALID_CELL_SIZES: CellSize[] = ["S", "M", "L", "XL"];
+const VALID_LAYOUTS: GraphLayout[] = ["horizontal", "vertical"];
+
+// --- Per-tier constraints (enforced server-side) ---
+const FREE_WEEKS = 52;
+const PRO_MAX_WEEKS = 52;
+const FREE_CELL_SIZE: CellSize = "L";
+const FREE_LAYOUT: GraphLayout = "horizontal";
 
 export async function GET(
   request: NextRequest,
@@ -16,15 +24,16 @@ export async function GET(
   const decodedUsername = decodeURIComponent(username);
   const searchParams = request.nextUrl.searchParams;
 
-  // Extract Params
-  const requestedTheme = searchParams.get("theme") ?? "light";
-  const weeks = parseInt(searchParams.get("weeks") || "52");
-  const cellSize = searchParams.get("cellSize") as CellSize;
-  const layout = (searchParams.get("layout") as GraphLayout) || "horizontal";
-  const hideWatermark = searchParams.get("hideWatermark") === "true";
-  const title = searchParams.get("title") || undefined;
+  // Extract raw params from URL
+  const requestedTheme   = searchParams.get("theme") ?? "light";
+  const requestedWeeks   = parseInt(searchParams.get("weeks") || "52");
+  const requestedCell    = searchParams.get("cellSize") as CellSize;
+  const requestedLayout  = (searchParams.get("layout") as GraphLayout) || "horizontal";
+  const requestedHideWm  = searchParams.get("hideWatermark") === "true";
+  const requestedTitle   = searchParams.get("title") || undefined;
 
   // --- SPECIAL CASE: DEMO DATA ---
+  // Demo is always "free" — cannot be used to preview Pro features
   if (decodedUsername === "demo") {
     const mockGithub: Record<string, number> = {};
     const mockGitlab: Record<string, number> = {};
@@ -36,14 +45,17 @@ export async function GET(
       if (Math.random() > 0.7) mockGithub[dateStr] = Math.floor(Math.random() * 5) + 1;
       if (Math.random() > 0.8) mockGitlab[dateStr] = Math.floor(Math.random() * 5) + 1;
     }
-    const themeParam: any = requestedTheme;
-    const svg = generateSVG(mockGithub, mockGitlab, { 
-      theme: themeParam, 
-      layout, 
-      weeks, 
-      cellSize,
-      title
-    }, "pro"); // Allow Pro features for Demo preview
+    // Only allow free themes in demo
+    const demoTheme: ThemeName = VALID_THEMES.includes(requestedTheme as ThemeName)
+      ? (requestedTheme as ThemeName)
+      : "light";
+    const resolvedDemoTheme: ThemeName = hasThemeAccess(demoTheme, "free") ? demoTheme : "light";
+    const svg = generateSVG(mockGithub, mockGitlab, {
+      theme: resolvedDemoTheme,
+      layout: FREE_LAYOUT,
+      weeks: FREE_WEEKS,
+      cellSize: FREE_CELL_SIZE,
+    }, "free");
     return new NextResponse(svg, {
       headers: {
         "Content-Type": "image/svg+xml",
@@ -55,61 +67,63 @@ export async function GET(
   try {
     const user = await (prisma.user as any).findFirst({
       where: { name: decodedUsername },
-      select: {
-        id: true,
-        name: true,
-        tier: true,
-        accounts: true,
-      },
+      select: { id: true, name: true, tier: true, accounts: true },
     });
 
     if (!user) return new NextResponse("User not found", { status: 404 });
 
     const userTier: "free" | "pro" = user.tier === "pro" ? "pro" : "free";
+    const isPro = userTier === "pro";
 
-    // 🔐 Theme Sanitization
-    const theme: ThemeName = VALID_THEMES.includes(requestedTheme as ThemeName)
+    // 🔐 Theme — validate allowlist then enforce tier access
+    const parsedTheme: ThemeName = VALID_THEMES.includes(requestedTheme as ThemeName)
       ? (requestedTheme as ThemeName)
-      : "dark";
-    const resolvedTheme: ThemeName = hasThemeAccess(theme, userTier) ? theme : "dark";
+      : "light";
+    const resolvedTheme: ThemeName = hasThemeAccess(parsedTheme, userTier) ? parsedTheme : "light";
 
-    let githubData = {};
-    let gitlabData = {};
+    // 🔐 Pro params — free users always get locked defaults regardless of URL
+    const weeks: number = isPro
+      ? Math.min(Math.max(1, isNaN(requestedWeeks) ? 52 : requestedWeeks), PRO_MAX_WEEKS)
+      : FREE_WEEKS;
+
+    const cellSize: CellSize = isPro && VALID_CELL_SIZES.includes(requestedCell)
+      ? requestedCell
+      : FREE_CELL_SIZE;
+
+    const layout: GraphLayout = isPro && VALID_LAYOUTS.includes(requestedLayout)
+      ? requestedLayout
+      : FREE_LAYOUT;
+
+    const title        = isPro ? requestedTitle : undefined;
+    const hideWatermark = isPro && requestedHideWm;
+
+    let githubData: Record<string, number> = {};
+    let gitlabData: Record<string, number> = {};
 
     for (const account of user.accounts) {
       const rawToken = account.encrypted_access_token || account.access_token;
       if (!rawToken) continue;
-
       const token = decrypt(rawToken);
 
       if (account.provider === "github") {
-        const ghService = new GitHubService(token);
-        githubData = await ghService.fetchContributions();
+        githubData = await new GitHubService(token).fetchContributions();
       } else if (account.provider === "gitlab") {
         const instanceUrl = (account as any).instance_url || "https://gitlab.com";
-        const glService = new GitLabService(token, user.name || "", instanceUrl);
-        gitlabData = await glService.fetchContributions();
+        gitlabData = await new GitLabService(token, user.name || "", instanceUrl).fetchContributions();
       }
     }
 
     const svg = generateSVG(
-      githubData, 
-      gitlabData, 
-      { 
-        theme: resolvedTheme,
-        weeks,
-        cellSize,
-        layout, // MISSING THIS! Added now.
-        title,
-        hideWatermark: userTier === "pro"
-      }, 
+      githubData,
+      gitlabData,
+      { theme: resolvedTheme, weeks, cellSize, layout, title, hideWatermark },
       userTier
     );
 
     return new NextResponse(svg, {
       headers: {
         "Content-Type": "image/svg+xml",
-        "Cache-Control": userTier === "pro"
+        "Cache-Control": isPro
           ? "public, s-maxage=300, stale-while-revalidate=60"
           : "public, s-maxage=3600, stale-while-revalidate=1800",
       },

@@ -246,37 +246,41 @@ export function generateSVG(
         ${isVertical ? `
           <!-- Vertical Layout Footer: Spaced Out -->
           <g>
-            <text x="0" y="5" font-size="8" fill="${colors.text}" font-weight="bold">GH</text>
-            <rect x="18" y="-4" width="8" height="8" fill="${colors.github[4]}" rx="1.5" />
+            <rect x="0" y="0" width="8" height="8" fill="${colors.github[3]}" rx="0" />
+            <text x="12" y="8" font-size="8" fill="${colors.text}" font-weight="bold">Github</text>
             
-            <text x="40" y="5" font-size="8" fill="${colors.text}" font-weight="bold">GL</text>
-            <rect x="58" y="-4" width="8" height="8" fill="${colors.gitlab[4]}" rx="1.5" />
+            <rect x="50" y="0" width="8" height="8" fill="${colors.gitlab[3]}" rx="0" />
+            <text x="62" y="8" font-size="8" fill="${colors.text}" font-weight="bold">GitLab</text>
             
-            <text x="80" y="5" font-size="8" fill="${colors.text}" font-weight="bold">MG</text>
-            <rect x="98" y="-4" width="8" height="8" fill="${colors.merged[4]}" rx="1.5" />
+            <rect x="104" y="0" width="8" height="8" fill="${colors.merged[3]}" rx="0" />
+            <text x="116" y="8" font-size="8" fill="${colors.text}" font-weight="bold">Merged</text>
           </g>
-          <g transform="translate(0, 25)">
-            <text x="0" y="5" font-size="8" fill="${colors.text}" opacity="0.5">Less</text>
-            <rect x="25" y="-4" width="8" height="8" fill="${colors.empty}" rx="1.5" />
-            <rect x="35" y="-4" width="8" height="8" fill="${colors.github[1]}" rx="1.5" />
-            <rect x="45" y="-4" width="8" height="8" fill="${colors.github[4]}" rx="1.5" />
-            <text x="60" y="5" font-size="8" fill="${colors.text}" opacity="0.5">More</text>
+          <g transform="translate(0, 22)">
+            <text x="0" y="8" font-size="8" fill="${colors.text}" opacity="0.5">Less</text>
+            <rect x="25" y="0" width="8" height="8" fill="${colors.empty}" rx="0" />
+            <rect x="35" y="0" width="8" height="8" fill="${colors.github[0]}" rx="0" />
+            <rect x="45" y="0" width="8" height="8" fill="${colors.github[1]}" rx="0" />
+            <rect x="55" y="0" width="8" height="8" fill="${colors.github[2]}" rx="0" />
+            <rect x="65" y="0" width="8" height="8" fill="${colors.github[3]}" rx="0" />
+            <text x="80" y="8" font-size="8" fill="${colors.text}" opacity="0.5">More</text>
           </g>
         ` : `
           <!-- Horizontal Layout Footer -->
-          <text x="0" y="10" font-size="9" fill="${colors.text}" font-weight="bold">GitHub</text>
-          <rect x="35" y="2" width="8" height="8" fill="${colors.github[4]}" rx="2" />
-          <text x="60" y="10" font-size="9" fill="${colors.text}" font-weight="bold">GitLab</text>
-          <rect x="95" y="2" width="8" height="8" fill="${colors.gitlab[4]}" rx="2" />
-          <text x="120" y="10" font-size="9" fill="${colors.text}" font-weight="bold">Merged</text>
-          <rect x="155" y="2" width="8" height="8" fill="${colors.merged[4]}" rx="2" />
+          <rect x="0" y="1" width="10" height="10" fill="${colors.github[3]}" rx="0" />
+          <text x="14" y="10" font-size="9" fill="${colors.text}" font-weight="bold">GitHub</text>
+          <rect x="60" y="1" width="10" height="10" fill="${colors.gitlab[3]}" rx="0" />
+          <text x="74" y="10" font-size="9" fill="${colors.text}" font-weight="bold">GitLab</text>
+          <rect x="118" y="1" width="10" height="10" fill="${colors.merged[3]}" rx="0" />
+          <text x="132" y="10" font-size="9" fill="${colors.text}" font-weight="bold">Merged</text>
           
-          <g transform="translate(${mainWidth - 85}, 0)">
+          <g transform="translate(${mainWidth - 115}, 0)">
             <text x="0" y="10" font-size="8" fill="${colors.text}" opacity="0.5">Less</text>
-            <rect x="25" y="2" width="8" height="8" fill="${colors.empty}" rx="1.5" />
-            <rect x="35" y="2" width="8" height="8" fill="${colors.github[2]}" rx="1.5" />
-            <rect x="45" y="2" width="8" height="8" fill="${colors.github[4]}" rx="1.5" />
-            <text x="60" y="10" font-size="8" fill="${colors.text}" opacity="0.5">More</text>
+            <rect x="26" y="1" width="10" height="10" fill="${colors.empty}" rx="0" />
+            <rect x="38" y="1" width="10" height="10" fill="${colors.github[0]}" rx="0" />
+            <rect x="50" y="1" width="10" height="10" fill="${colors.github[1]}" rx="0" />
+            <rect x="62" y="1" width="10" height="10" fill="${colors.github[2]}" rx="0" />
+            <rect x="74" y="1" width="10" height="10" fill="${colors.github[3]}" rx="0" />
+            <text x="90" y="10" font-size="8" fill="${colors.text}" opacity="0.5">More</text>
           </g>
         `}
       </g>
