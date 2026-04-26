@@ -3,7 +3,7 @@
 import React from "react";
 import { useLanguage } from "@/lib/contexts/LanguageContext";
 import { useTheme } from "@/lib/contexts/ThemeContext";
-import { Globe, LogOut, Moon, Sun, Trash2 } from "lucide-react";
+import { Globe, LogOut, Moon, Sun, Trash2, Sparkles, Crown } from "lucide-react";
 import Link from "next/link";
 import { signOut, useSession } from "next-auth/react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -16,7 +16,17 @@ export function Navbar() {
   const [showDeleteModal, setShowDeleteModal] = React.useState(false);
   const [deleteCountdown, setDeleteCountdown] = React.useState(5);
   const [isDeleting, setIsDeleting] = React.useState(false);
+  const [userTier, setUserTier] = React.useState<'free' | 'pro'>('free');
   const dropdownRef = React.useRef<HTMLDivElement>(null);
+
+  // Fetch tier from server (DB) when session is available
+  React.useEffect(() => {
+    if (!session?.user) return;
+    fetch('/api/user/status')
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => { if (data?.tier) setUserTier(data.tier); })
+      .catch(() => {});
+  }, [session]);
 
   React.useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -95,6 +105,12 @@ export function Navbar() {
                 <span className="text-xs font-bold opacity-70 group-hover:opacity-100 transition-opacity hidden sm:block">
                   {session.user?.name?.split(' ')[0]}
                 </span>
+                {/* Tier mini badge on trigger */}
+                {userTier === 'pro' ? (
+                  <span className="hidden sm:flex items-center gap-0.5 text-[9px] font-black text-purple-300 bg-purple-500/20 px-1.5 py-0.5 rounded-full">
+                    <Sparkles className="w-2.5 h-2.5" /> PRO
+                  </span>
+                ) : null}
                 <div className="w-8 h-8 rounded-full overflow-hidden border border-white/20 bg-gitlab-gradient flex items-center justify-center">
                   {session.user?.image ? (
                     <img src={session.user.image} alt="User" className="w-full h-full object-cover" />
@@ -118,9 +134,31 @@ export function Navbar() {
                         : 'bg-white border-black/10 shadow-[0_20px_50px_rgba(0,0,0,0.15)]'
                     }`}
                   >
-                    <div className="p-4 border-b border-black/5">
-                      <p className={`text-xs font-bold truncate ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{session.user?.name}</p>
+                    <div className={`p-4 border-b ${theme === 'dark' ? 'border-white/5' : 'border-black/5'}`}>
+                      <div className="flex items-center justify-between gap-2 mb-1">
+                        <p className={`text-xs font-bold truncate ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{session.user?.name}</p>
+                        {/* Tier Badge */}
+                        {userTier === 'pro' ? (
+                          <span className="flex items-center gap-1 text-[9px] font-black text-purple-300 bg-purple-500/20 px-2 py-0.5 rounded-full shrink-0">
+                            <Sparkles className="w-2.5 h-2.5" /> PRO
+                          </span>
+                        ) : (
+                          <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full shrink-0 ${
+                            theme === 'dark' ? 'bg-white/5 text-white/30' : 'bg-black/5 text-black/30'
+                          }`}>
+                            FREE
+                          </span>
+                        )}
+                      </div>
                       <p className={`text-[10px] truncate ${theme === 'dark' ? 'text-white/50' : 'text-gray-400'}`}>{session.user?.email}</p>
+                      {/* Upgrade prompt for free users */}
+                      {userTier === 'free' && (
+                        <a href="/?upgrade=1"
+                          onClick={() => setIsDropdownOpen(false)}
+                          className="mt-2 flex items-center gap-1.5 text-[10px] font-bold text-purple-400 hover:text-purple-300 transition-colors">
+                          <Crown className="w-3 h-3" /> Upgrade to Pro — $9
+                        </a>
+                      )}
                     </div>
                     
                     <div className="p-2">

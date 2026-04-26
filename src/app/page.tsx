@@ -1,6 +1,7 @@
 "use client";
 
 import { Navbar } from "@/components/Navbar";
+import { UpgradeModal } from "@/components/UpgradeModal";
 import { useLanguage } from "@/lib/contexts/LanguageContext";
 import { useTheme } from "@/lib/contexts/ThemeContext";
 import { motion, AnimatePresence } from "framer-motion";
@@ -25,7 +26,9 @@ import {
   Layout,
   PlayCircle,
   Eye,
-  AlertTriangle
+  AlertTriangle,
+  Lock,
+  Sparkles
 } from "lucide-react";
 import { signIn, signOut, useSession } from "next-auth/react";
 import { useState, useEffect } from "react";
@@ -51,17 +54,30 @@ export default function Home() {
   const [baseUrl, setBaseUrl] = useState("");
   const [generatedUrl, setGeneratedUrl] = useState("");
   const [isExpanded, setIsExpanded] = useState(false);
-  const [previewTheme, setPreviewTheme] = useState<'dark' | 'light'>('dark');
+  const [previewTheme, setPreviewTheme] = useState<string>('light');
   const [isLoading, setIsLoading] = useState(true);
   const [copied, setCopied] = useState(false);
-  const [accountStatus, setAccountStatus] = useState<{ github: boolean, gitlab: boolean }>({ github: false, gitlab: false });
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [accountStatus, setAccountStatus] = useState<{ github: boolean; gitlab: boolean; tier: 'free' | 'pro' }>({ github: false, gitlab: false, tier: 'free' });
+  
+  // Pro Settings States
+  const [weeks, setWeeks] = useState(52);
+  const [cellSize, setCellSize] = useState<string>("L");
+  const [layout, setLayout] = useState<string>("horizontal");
+  const [customTitle, setCustomTitle] = useState("");
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [lastModified, setLastModified] = useState(Date.now());
+
+  // Track changes to refresh preview
+  useEffect(() => {
+    setLastModified(Date.now());
+  }, [weeks, cellSize, layout, customTitle, previewTheme]);
 
   useEffect(() => {
-    setPreviewTheme(theme);
     if (typeof window !== "undefined") {
       setBaseUrl(window.location.origin);
     }
-  }, [theme]);
+  }, []);
 
   const [codeStyle, setCodeStyle] = useState<'markdown' | 'html' | 'link'>('markdown');
 
@@ -87,14 +103,23 @@ export default function Home() {
     }
   }, [session, baseUrl]);
 
-  const getFinalUrl = (pTheme: 'dark' | 'light', customName?: string) => {
+  const getFinalUrl = (pTheme: string, customName?: string) => {
     if (!baseUrl) return null;
     const name = customName || (session?.user?.name ? encodeURIComponent(session.user.name) : "demo");
-    return `${baseUrl}/api/graph/${name}?theme=${pTheme}&t=${Date.now()}`;
+    const endpoint = "graph";
+    
+    let url = `${baseUrl}/api/${endpoint}/${name}?theme=${pTheme}`;
+    
+    if (weeks !== 52) url += `&weeks=${weeks}`;
+    if (cellSize !== "M") url += `&cellSize=${cellSize}`;
+    if (layout !== "horizontal") url += `&layout=${layout}`;
+    if (customTitle) url += `&title=${encodeURIComponent(customTitle)}`;
+    
+    return `${url}&t=${lastModified}`;
   };
 
   const getFormattedCode = () => {
-    const url = `${generatedUrl}?theme=${previewTheme}`;
+    const url = getFinalUrl(previewTheme) || "";
     if (codeStyle === 'markdown') return `![GitComBridge Unified Graph](${url})`;
     if (codeStyle === 'html') return `<p align="center">\n  <img src="${url}" alt="GitComBridge" />\n</p>`;
     return `<p align="center">\n  <a href="${baseUrl}">\n    <img src="${url}" alt="GitComBridge" />\n  </a>\n</p>`;
@@ -104,6 +129,32 @@ export default function Home() {
     navigator.clipboard.writeText(getFormattedCode());
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const renderThemeButton = (t: { id: string; label: string; color: string; pro: boolean }) => {
+    const isLocked = t.pro && accountStatus.tier !== "pro";
+    return (
+      <button
+        key={t.id}
+        onClick={() => {
+          if (isLocked) { setShowUpgradeModal(true); return; }
+          setPreviewTheme(t.id); setIsLoading(true);
+        }}
+        title={isLocked ? `${t.label} — Pro only` : t.label}
+        className={`relative flex items-center justify-center sm:justify-start gap-1.5 px-2 py-1.5 rounded-lg text-[9px] font-bold transition-all border ${
+          previewTheme === t.id
+            ? "border-purple-500/60 bg-purple-500/10 text-purple-600 dark:text-purple-300"
+            : isLocked
+            ? `${theme === 'dark' ? 'border-white/5 bg-white/2 opacity-50' : 'border-black/5 bg-black/2 opacity-40'} cursor-pointer hover:opacity-80`
+            : `${theme === 'dark' ? 'border-white/10 bg-white/5 hover:border-white/20' : 'border-black/10 bg-black/5 hover:border-black/20'}`
+        } ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}
+      >
+        <span className={`w-2.5 h-2.5 rounded-full border shrink-0 ${theme === 'dark' ? 'border-white/20' : 'border-black/10'}`} style={{ background: t.color }} />
+        <span className="truncate">{t.label}</span>
+        {isLocked && <Lock className={`w-2 h-2 shrink-0 ${theme === 'dark' ? 'text-yellow-400' : 'text-yellow-600'}`} />}
+        {t.pro && accountStatus.tier === "pro" && <Sparkles className="w-2 h-2 text-purple-400 shrink-0" />}
+      </button>
+    );
   };
 
   return (
@@ -259,31 +310,55 @@ export default function Home() {
         <div className="max-w-5xl mx-auto space-y-12">
           {session ? (
             <motion.div initial={{ opacity: 0, y: 40 }} whileInView={{ opacity: 1, y: 0 }} className="glass-card overflow-hidden shadow-2xl border-white/10 dark:border-white/5">
-              <div className="bg-white/5 px-6 py-4 border-b border-white/10 flex items-center justify-between">
-                <div className="flex gap-1.5">
+              <div className="bg-white/5 px-6 py-4 border-b border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="flex gap-1.5 self-start sm:self-auto">
                   <div className="w-3 h-3 rounded-full bg-red-500/50" />
                   <div className="w-3 h-3 rounded-full bg-yellow-500/50" />
                   <div className="w-3 h-3 rounded-full bg-green-500/50" />
                 </div>
-                <div className="flex gap-2 p-1 bg-black/5 dark:bg-black/20 rounded-lg">
-                  <button 
-                    onClick={() => { setPreviewTheme('dark'); setIsLoading(true); }} 
-                    className={`px-3 py-1.5 rounded flex items-center gap-1.5 text-xs font-bold transition-all ${previewTheme === 'dark' ? 'bg-white/10 dark:bg-white/20 text-current' : 'opacity-40'}`}
-                  >
-                    <Moon className="w-3 h-3" /> Dark
-                  </button>
-                  <button 
-                    onClick={() => { setPreviewTheme('light'); setIsLoading(true); }} 
-                    className={`px-3 py-1.5 rounded flex items-center gap-1.5 text-xs font-bold transition-all ${previewTheme === 'light' ? 'bg-white dark:bg-white/20 text-black dark:text-white' : 'opacity-40'}`}
-                  >
-                    <Sun className="w-3 h-3" /> Light
-                  </button>
+                {/* Theme Picker */}
+                <div className="flex flex-col gap-6 w-full sm:w-auto">
+                  {/* Light Themes */}
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 px-1 sm:justify-end opacity-40">
+                      <Sun className="w-3 h-3 text-orange-400" />
+                      <span className="text-[10px] font-black uppercase tracking-wider">{t('theme_light')}</span>
+                    </div>
+                    <div className="grid grid-cols-3 xs:grid-cols-4 sm:flex sm:flex-wrap gap-2 sm:justify-end">
+                      {[
+                        { id: "light",   label: "Light",   color: "#ffffff", pro: false },
+                        { id: "snow",    label: "Snow",    color: "#f2f2f2", pro: true },
+                        { id: "sakura",  label: "Sakura",  color: "#FFE4EE", pro: true },
+                        { id: "daydream",  label: "Daydream",  color: "#AFDCF0", pro: true },
+                        { id: "latte",  label: "Latte",  color: "#A67B5B", pro: true },
+                        { id: "ruby",  label: "Ruby",  color: "#E11D48", pro: true },
+                      ].map((t) => renderThemeButton(t))}
+                    </div>
+                  </div>
+
+                  {/* Dark Themes */}
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 px-1 sm:justify-end opacity-40">
+                      <Moon className="w-3 h-3 text-purple-400" />
+                      <span className="text-[10px] font-black uppercase tracking-wider">{t('theme_dark')}</span>
+                    </div>
+                    <div className="grid grid-cols-3 xs:grid-cols-4 sm:flex sm:flex-wrap gap-2 sm:justify-end">
+                      {[
+                        { id: "dark",    label: "Dark",    color: "#0d1117", pro: false },
+                        { id: "ocean",   label: "Ocean",   color: "#354f7cff", pro: true },
+                        { id: "sunset",  label: "Sunset",  color: "#8B1D1C", pro: true },
+                        { id: "neon",    label: "Neon",    color: "#0C8", pro: true },
+                        { id: "monokai", label: "Monokai", color: "#3E3D32", pro: true },
+                        { id: "matcha",  label: "Matcha",  color: "#4C6926", pro: true },
+                      ].map((t) => renderThemeButton(t))}
+                    </div>
+                  </div>
                 </div>
               </div>
 
               <div className="p-8 md:p-12 space-y-10">
                 <div className="flex flex-col md:flex-row justify-between items-center gap-6">
-                  <h2 className="text-3xl font-black">Workspace</h2>
+                  <h2 className="text-3xl font-black">{t('workspace_title')}</h2>
                   <div className="flex gap-3">
                     <button onClick={() => signIn("github")} className="p-3 glass-card hover:bg-black/5 flex items-center gap-3 transition-all relative cursor-pointer">
                       <GitHubIcon /> 
@@ -291,7 +366,7 @@ export default function Home() {
                         <div className="text-[10px] font-bold opacity-50 uppercase">GitHub</div>
                         <div className="flex items-center gap-1.5">
                           <div className={`w-1.5 h-1.5 rounded-full ${accountStatus.github ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]' : 'bg-red-500'}`} />
-                          <span className="text-xs font-black">{accountStatus.github ? 'Linked' : 'Not Linked'}</span>
+                          <span className="text-xs font-black">{accountStatus.github ? t('connected') : t('not_connected')}</span>
                         </div>
                       </div>
                     </button>
@@ -301,80 +376,194 @@ export default function Home() {
                         <div className="text-[10px] font-bold opacity-50 uppercase">GitLab</div>
                         <div className="flex items-center gap-1.5">
                           <div className={`w-1.5 h-1.5 rounded-full ${accountStatus.gitlab ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]' : 'bg-red-500'}`} />
-                          <span className="text-xs font-black">{accountStatus.gitlab ? 'Linked' : 'Not Linked'}</span>
+                          <span className="text-xs font-black">{accountStatus.gitlab ? t('connected') : t('not_connected')}</span>
                         </div>
                       </div>
                     </button>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <div className="space-y-6">
-                    <div className="space-y-3 p-4 rounded-xl bg-blue-500/5 border border-blue-500/10">
-                      <label className="text-[10px] font-black text-blue-400 uppercase tracking-widest flex items-center gap-2">
-                        <Info className="w-3 h-3" /> {t("update_info_title")}
-                      </label>
-                      <p className="text-[10px] text-github-text/70 leading-relaxed">
-                        {t("update_info_desc")}
-                      </p>
-                    </div>
-                    <div className="space-y-3">
-                      <div className="flex p-1 bg-black/5 dark:bg-black/20 rounded-xl border border-black/5 dark:border-white/5 gap-1">
-                        {(['markdown', 'html', 'link'] as const).map((style) => (
-                          <button
-                            key={style}
-                            onClick={() => setCodeStyle(style)}
-                            className={`flex-1 py-2 text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all ${
-                              codeStyle === style 
-                              ? 'bg-gitlab-gradient text-white shadow-lg' 
-                              : 'opacity-40 hover:opacity-100'
+                <div className="space-y-8">
+                  {/* Row 1: Settings Grid */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
+                    <div className="space-y-6 flex flex-col">
+                      {/* Pro Settings Panel */}
+                      <div className={`p-5 rounded-2xl border space-y-5 transition-colors relative group/pro flex-1 ${
+                        accountStatus.tier === 'pro' 
+                          ? 'border-purple-500/20 bg-purple-500/5' 
+                          : 'border-white/5 bg-white/2'
+                      }`}>
+                        {accountStatus.tier !== 'pro' && (
+                          <div 
+                            onClick={() => setShowUpgradeModal(true)}
+                            className={`absolute h-full inset-0 z-10 flex flex-col items-center justify-center backdrop-blur-md rounded-2xl cursor-pointer transition-all border ${
+                              theme === 'dark' 
+                                ? 'bg-black/60 group-hover/pro:bg-black/70 border-white/5' 
+                                : 'bg-black/10 group-hover/pro:bg-white/70 border-black/5'
                             }`}
                           >
-                            {style === 'markdown' ? 'Markdown' : style === 'html' ? 'Centered' : 'Interactive'}
-                          </button>
-                        ))}
-                      </div>
-                      <label className="text-xs font-black opacity-50 uppercase tracking-widest flex items-center gap-2"><Terminal className="w-3 h-3" /> Resulting Code</label>
-                      <div className="bg-black/5 dark:bg-black/40 rounded-xl border border-black/5 dark:border-white/5 relative group overflow-hidden min-h-[80px] flex items-center">
-                        <div className="p-5 pr-14 w-full">
-                          <code className={`text-[10px] font-mono whitespace-pre-wrap break-all leading-relaxed ${theme === 'light' ? 'text-purple-700' : 'text-purple-400'}`}>
-                            {getFormattedCode()}
-                          </code>
+                            <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-3 shadow-2xl animate-pulse border ${
+                              theme === 'dark'
+                                ? 'bg-purple-500/20 border-purple-500/30 shadow-purple-500/40'
+                                : 'bg-purple-500/10 border-purple-500/20 shadow-purple-500/20'
+                            }`}>
+                              <Lock className={`w-5 h-5 ${theme === 'dark' ? 'text-purple-400' : 'text-purple-600'}`} />
+                            </div>
+                            <span className={`text-[10px] font-black uppercase tracking-[0.2em] drop-shadow-lg ${
+                              theme === 'dark' ? 'text-purple-400' : 'text-purple-600'
+                            }`}>{t('upgrade_to_pro')}</span>
+                          </div>
+                        )}
+                        <div className="flex items-center justify-between">
+                          <label className={`text-[10px] font-black uppercase tracking-widest flex items-center gap-2 text-purple-400`}>
+                            <Sparkles className="w-3 h-3" /> {t('pro_customizer')}
+                          </label>
+                          {accountStatus.tier === 'pro' && (
+                            <button 
+                              onClick={() => { setIsRefreshing(true); setTimeout(() => setIsRefreshing(false), 2000); }}
+                              className={`text-[10px] font-bold transition-colors flex items-center gap-1.5 text-white/40 hover:text-white cursor-pointer`}
+                            >
+                              <Zap className={`w-3 h-3 ${isRefreshing ? 'animate-pulse text-yellow-400' : ''}`} /> {isRefreshing ? t('refreshing') : t('force_refresh')}
+                            </button>
+                          )}
                         </div>
-                        <button 
-                          onClick={handleCopy} 
-                          className="absolute top-2 right-2 p-2.5 bg-gitlab-gradient rounded-lg shadow-lg hover:scale-105 transition-all active:scale-95 opacity-80 group-hover:opacity-100"
-                        >
-                          {copied ? <Check className="w-4 h-4 text-white" /> : <Copy className="w-4 h-4 text-white" />}
-                        </button>
+
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-1.5">
+                            <p className={`text-[9px] font-bold uppercase opacity-40`}>{t('custom_title')}</p>
+                            <input 
+                              type="text"
+                              placeholder="e.g. My Contributions"
+                              value={customTitle}
+                              onChange={(e) => accountStatus.tier === 'pro' ? setCustomTitle(e.target.value) : setShowUpgradeModal(true)}
+                              disabled={accountStatus.tier !== 'pro'}
+                              className={`w-full border rounded-lg px-3 py-2 text-xs outline-none transition-all bg-black/5 dark:bg-white/5 border-black/5 dark:border-white/10 focus:border-purple-500/50 text-current placeholder:opacity-30 ${accountStatus.tier !== 'pro' ? 'cursor-not-allowed opacity-50' : ''}`}
+                            />
+                          </div>
+                          <div className="space-y-1.5">
+                            <p className={`text-[9px] font-bold uppercase opacity-40`}>{t('weeks')}</p>
+                            <select 
+                              value={weeks}
+                              disabled={accountStatus.tier !== 'pro'}
+                              onChange={(e) => accountStatus.tier === 'pro' ? setWeeks(parseInt(e.target.value)) : setShowUpgradeModal(true)}
+                              className={`w-full border rounded-lg px-3 py-2 text-xs outline-none cursor-pointer transition-all bg-black/5 dark:bg-white/5 border-black/5 dark:border-white/10 text-current ${accountStatus.tier !== 'pro' ? 'cursor-not-allowed opacity-50' : ''}`}
+                            >
+                              <option value={26}>{t('half_year')}</option>
+                              <option value={52}>{t('standard')}</option>
+                              <option value={104}>{t('two_years')}</option>
+                            </select>
+                          </div>
+                          <div className="space-y-1.5">
+                            <p className={`text-[9px] font-bold uppercase opacity-40`}>Layout</p>
+                            <select 
+                              value={layout}
+                              disabled={accountStatus.tier !== 'pro'}
+                              onChange={(e) => accountStatus.tier === 'pro' ? setLayout(e.target.value) : setShowUpgradeModal(true)}
+                              className={`w-full border rounded-lg px-3 py-2 text-xs outline-none cursor-pointer transition-all bg-black/5 dark:bg-white/5 border-black/5 dark:border-white/10 text-current ${accountStatus.tier !== 'pro' ? 'cursor-not-allowed opacity-50' : ''}`}
+                            >
+                              <option value="horizontal">{t('horiz_normal')}</option>
+                              <option value="vertical">{t('vert_sidebar')}</option>
+                            </select>
+                          </div>
+                          <div className="space-y-1.5">
+                            <p className={`text-[9px] font-bold uppercase opacity-40`}>{t('cell_size')}</p>
+                            <div className="flex gap-1">
+                              {["S", "M", "L", "XL"].map(s => (
+                                <button 
+                                  key={s}
+                                  disabled={accountStatus.tier !== 'pro'}
+                                  onClick={() => accountStatus.tier === 'pro' ? setCellSize(s) : setShowUpgradeModal(true)}
+                                  className={`flex-1 py-1.5 rounded-md text-[10px] font-bold border transition-all cursor-pointer ${
+                                    cellSize === s 
+                                      ? 'bg-purple-500/20 border-purple-500/50 text-purple-600 dark:text-purple-300'
+                                      : 'bg-black/5 dark:bg-white/5 border-black/5 dark:border-white/10 opacity-50 hover:opacity-100 text-current'
+                                  } ${accountStatus.tier !== 'pro' ? 'cursor-not-allowed' : ''}`}
+                                >
+                                  {s}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                          <div className="space-y-1.5 col-span-2">
+                            {/* Output Mode removed as requested */}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="space-y-6 relative">
+                      <div className={`md:absolute md:inset-0 p-5 rounded-2xl border flex flex-col transition-colors border-white/5 bg-white/2`}>
+                        <div className="space-y-4 flex flex-col h-full min-h-0">
+                          <div className="space-y-4">
+                            <label className="text-[10px] font-black opacity-50 uppercase tracking-widest flex items-center gap-2">
+                              {t("export_title")}
+                            </label>
+                            <div className="flex bg-black/5 dark:bg-white/10 p-1 rounded-xl border border-black/5 dark:border-white/10">
+                              {['markdown', 'html', 'link'].map((style) => (
+                                <button
+                                  key={style}
+                                  onClick={() => setCodeStyle(style as any)}
+                                  className={`flex-1 py-2 text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all cursor-pointer ${
+                                    codeStyle === style 
+                                      ? 'bg-gradient-to-r from-gitlab-orange to-gitlab-purple text-white shadow-lg' 
+                                      : 'text-gray-500 dark:text-current opacity-40 hover:bg-black/5 dark:hover:bg-white/5'
+                                  }`}
+                                >
+                                  {style}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div className="space-y-3 flex-1 flex flex-col min-h-0">
+                            <label className={`text-[10px] font-black uppercase tracking-widest flex items-center gap-2 opacity-50`}>
+                              <Terminal className="w-3 h-3" /> {t("result_title")}
+                            </label>
+                            <div className="relative group flex-1 min-h-0">
+                              <pre 
+                                className={`p-4 pr-12 rounded-xl font-mono text-[10px] border h-full transition-colors bg-black/5 dark:bg-black/40 text-purple-600 dark:text-gitlab-purple border-black/5 dark:border-white/10 break-all whitespace-pre-wrap overflow-y-auto`}
+                                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                              >
+                                <style dangerouslySetInnerHTML={{__html: `pre::-webkit-scrollbar { display: none; }`}} />
+                                <code>{getFormattedCode()}</code>
+                              </pre>
+                              <button 
+                                onClick={handleCopy}
+                                className={`absolute top-2.5 right-2.5 p-2.5 rounded-lg transition-all active:scale-95 border backdrop-blur-sm shadow-sm bg-white/5 border-white/5 text-gray-400 hover:bg-white/10 hover:text-white cursor-pointer`}
+                              >
+                                {copied ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
+                              </button>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <label className="text-xs font-black opacity-50 uppercase tracking-widest flex items-center gap-2"><Maximize2 className="w-3 h-3" /> Visual Output</label>
-                    <div 
-                      className={`glass-card p-4 flex items-center justify-center min-h-[180px] cursor-zoom-in relative group transition-all overflow-hidden border-black/5 ${previewTheme === 'light' ? 'bg-[#f6f8fa]' : 'bg-[#0d1117]'}`}
-                      onClick={() => setIsExpanded(true)}
-                    >
-                      <AnimatePresence>
-                        {isLoading && (
-                          <motion.div 
-                            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                            className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-background/50 backdrop-blur-[2px]"
-                          >
-                            <Loader2 className="w-8 h-8 animate-spin text-gitlab-orange" />
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                        {getFinalUrl(previewTheme) && (
-                          <img 
-                            src={getFinalUrl(previewTheme) as string} 
-                            alt="Preview" 
-                            onLoad={() => setIsLoading(false)}
-                            className={`max-w-full h-auto shadow-sm transition-opacity duration-300 ${isLoading ? 'opacity-0' : 'opacity-100'}`}
-                          />
-                        )}
+                  {/* Row 2: Full Width Visual Output */}
+                  <div className="space-y-4 pt-4 border-t border-white/5">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-black opacity-50 uppercase tracking-widest flex items-center gap-2">
+                        <Maximize2 className="w-3 h-3" /> {t('visual_output')}
+                      </label>
+                      <span className="text-[10px] font-bold text-purple-400/60 uppercase">{t('realtime_preview')}</span>
+                    </div>
+                    
+                    <div className="glass-card p-8 flex items-center justify-center min-h-[350px] relative transition-all overflow-hidden border-black/5 dark:border-white/5 bg-black/5 dark:bg-[#0d1117]">
+                      {isLoading && (
+                        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/40 backdrop-blur-[2px]">
+                          <Loader2 className="w-8 h-8 animate-spin text-purple-500" />
+                          <p className="mt-2 text-[10px] font-bold text-purple-400 uppercase tracking-widest animate-pulse">{t('generating_svg')}</p>
+                        </div>
+                      )}
+                      
+                      <div className="w-full flex justify-center z-10">
+                        <img 
+                          src={getFinalUrl(previewTheme) as string} 
+                          alt="Preview" 
+                          onLoad={() => setIsLoading(false)}
+                          className={`max-w-full h-auto drop-shadow-2xl transition-all duration-500 hover:scale-[1.01] ${isLoading ? 'opacity-0' : 'opacity-100'} rounded-lg border border-white/5`}
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -382,8 +571,8 @@ export default function Home() {
             </motion.div>
           ) : (
             <div className="text-center py-20">
-               <h3 className="text-4xl font-black mb-8">Ready to sync?</h3>
-               <button onClick={() => signIn()} className="btn-gradient inline-flex items-center gap-4 text-xl px-12 py-5">Get My Graph Now <ChevronRight className="w-6 h-6" /></button>
+               <h3 className="text-4xl font-black mb-8">{t('ready_to_sync')}</h3>
+               <button onClick={() => signIn()} className="btn-gradient inline-flex items-center gap-4 text-xl px-12 py-5">{t('get_my_graph')} <ChevronRight className="w-6 h-6" /></button>
             </div>
           )}
         </div>
@@ -425,30 +614,6 @@ export default function Home() {
             </div>
           </div>
 
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            className="mt-16 p-8 glass-card bg-gitlab-gradient/5 border-gitlab-gradient/10 rounded-3xl"
-          >
-            <div className="flex flex-col md:flex-row items-center gap-8">
-              <div className="flex-1 space-y-4">
-                <h4 className="text-2xl font-black flex items-center gap-3">
-                  <GitHubIcon /> {t("pro_tip_title")}
-                </h4>
-                <p className="text-sm opacity-70 leading-relaxed">
-                  {t("pro_tip_desc")}
-                </p>
-                <div className="bg-black/40 p-4 rounded-xl font-mono text-xs text-green-400 border border-white/5">
-                  &lt;p align="center"&gt;<br />
-                  &nbsp;&nbsp;&lt;img src="URL_HERE" alt="GitComBridge" /&gt;<br />
-                  &lt;/p&gt;
-                </div>
-              </div>
-              <div className="hidden md:block">
-                <ExternalLink className="w-20 h-20 opacity-10" />
-              </div>
-            </div>
-          </motion.div>
         </div>
       </section>
 
@@ -461,12 +626,15 @@ export default function Home() {
            </div>
             <p className="text-[10px] uppercase tracking-[0.2em]">Crafted with passion for developers (Papangkorn PJ.)</p>
             <div className="flex items-center gap-6 text-[10px] uppercase tracking-widest font-bold">
-               <a href="/terms" className="hover:text-white transition-colors">Terms</a>
+                <a href="/terms" className="hover:text-white transition-colors">Terms</a>
                <a href="/privacy" className="hover:text-white transition-colors">Privacy</a>
                <a href="https://github.com/tahpapangkorn" target="_blank" className="flex items-center gap-2 hover:text-white transition-colors"><GitHubIcon /> GitHub</a>
             </div>
         </div>
       </footer>
+
+      {/* Upgrade Modal */}
+      <UpgradeModal isOpen={showUpgradeModal} onClose={() => setShowUpgradeModal(false)} />
     </main>
   );
 }
