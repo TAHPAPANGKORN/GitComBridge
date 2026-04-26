@@ -94,6 +94,9 @@ export async function GET(
       ? requestedLayout
       : FREE_LAYOUT;
 
+    const timezone      = searchParams.get("timezone") || "Asia/Bangkok";
+    
+    const theme        = resolvedTheme;
     const title        = isPro ? requestedTitle : undefined;
     const hideWatermark = isPro && requestedHideWm;
 
@@ -126,7 +129,7 @@ export async function GET(
     const svg = generateSVG(
       githubData,
       gitlabData,
-      { theme: resolvedTheme, weeks, cellSize, layout, title, hideWatermark },
+      { theme: resolvedTheme, weeks, cellSize, layout, title, hideWatermark, timezone },
       userTier
     );
 
