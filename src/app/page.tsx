@@ -65,14 +65,13 @@ export default function Home() {
   const [cellSize, setCellSize] = useState<string>("L");
   const [layout, setLayout] = useState<string>("horizontal");
   const [customTitle, setCustomTitle] = useState("");
-  const [showStats, setShowStats] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastModified, setLastModified] = useState(Date.now());
 
   // Track changes to refresh preview
   useEffect(() => {
     setLastModified(Date.now());
-  }, [weeks, cellSize, layout, customTitle, previewTheme, showStats]);
+  }, [weeks, cellSize, layout, customTitle, previewTheme]);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -107,16 +106,14 @@ export default function Home() {
   const getFinalUrl = (pTheme: string, customName?: string) => {
     if (!baseUrl) return null;
     const name = customName || (session?.user?.name ? encodeURIComponent(session.user.name) : "demo");
-    const endpoint = showStats ? "stats" : "graph";
+    const endpoint = "graph";
     
     let url = `${baseUrl}/api/${endpoint}/${name}?theme=${pTheme}`;
     
-    if (!showStats) {
-      if (weeks !== 52) url += `&weeks=${weeks}`;
-      if (cellSize !== "M") url += `&cellSize=${cellSize}`;
-      if (layout !== "horizontal") url += `&layout=${layout}`;
-      if (customTitle) url += `&title=${encodeURIComponent(customTitle)}`;
-    }
+    if (weeks !== 52) url += `&weeks=${weeks}`;
+    if (cellSize !== "M") url += `&cellSize=${cellSize}`;
+    if (layout !== "horizontal") url += `&layout=${layout}`;
+    if (customTitle) url += `&title=${encodeURIComponent(customTitle)}`;
     
     return `${url}&t=${lastModified}`;
   };
@@ -132,6 +129,32 @@ export default function Home() {
     navigator.clipboard.writeText(getFormattedCode());
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const renderThemeButton = (t: { id: string; label: string; color: string; pro: boolean }) => {
+    const isLocked = t.pro && accountStatus.tier !== "pro";
+    return (
+      <button
+        key={t.id}
+        onClick={() => {
+          if (isLocked) { setShowUpgradeModal(true); return; }
+          setPreviewTheme(t.id); setIsLoading(true);
+        }}
+        title={isLocked ? `${t.label} — Pro only` : t.label}
+        className={`relative flex items-center justify-center sm:justify-start gap-1.5 px-2 py-1.5 rounded-lg text-[9px] font-bold transition-all border ${
+          previewTheme === t.id
+            ? "border-purple-500/60 bg-purple-500/10 text-purple-600 dark:text-purple-300"
+            : isLocked
+            ? `${theme === 'dark' ? 'border-white/5 bg-white/2 opacity-50' : 'border-black/5 bg-black/2 opacity-40'} cursor-pointer hover:opacity-80`
+            : `${theme === 'dark' ? 'border-white/10 bg-white/5 hover:border-white/20' : 'border-black/10 bg-black/5 hover:border-black/20'}`
+        } ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}
+      >
+        <span className={`w-2.5 h-2.5 rounded-full border shrink-0 ${theme === 'dark' ? 'border-white/20' : 'border-black/10'}`} style={{ background: t.color }} />
+        <span className="truncate">{t.label}</span>
+        {isLocked && <Lock className={`w-2 h-2 shrink-0 ${theme === 'dark' ? 'text-yellow-400' : 'text-yellow-600'}`} />}
+        {t.pro && accountStatus.tier === "pro" && <Sparkles className="w-2 h-2 text-purple-400 shrink-0" />}
+      </button>
+    );
   };
 
   return (
@@ -294,40 +317,42 @@ export default function Home() {
                   <div className="w-3 h-3 rounded-full bg-green-500/50" />
                 </div>
                 {/* Theme Picker */}
-                <div className="grid grid-cols-3 xs:grid-cols-4 sm:flex sm:flex-wrap items-center justify-center sm:justify-end gap-1.5 w-full sm:w-auto">
-                  {[
-                    { id: "dark",    label: "Dark",    color: "#0d1117", pro: false },
-                    { id: "light",   label: "Light",   color: "#ffffff", pro: false },
-                    { id: "ocean",   label: "Ocean",   color: "#0a1628", pro: true },
-                    { id: "sunset",  label: "Sunset",  color: "#1a0a0a", pro: true },
-                    { id: "neon",    label: "Neon",    color: "#000000", pro: true },
-                    { id: "monokai", label: "Monokai", color: "#272822", pro: true },
-                    { id: "sakura",  label: "Sakura",  color: "#160912", pro: true },
-                  ].map((t) => {
-                    const isLocked = t.pro && accountStatus.tier !== "pro";
-                    return (
-                      <button
-                        key={t.id}
-                        onClick={() => {
-                          if (isLocked) { setShowUpgradeModal(true); return; }
-                          setPreviewTheme(t.id); setIsLoading(true);
-                        }}
-                        title={isLocked ? `${t.label} — Pro only` : t.label}
-                        className={`relative flex items-center justify-center sm:justify-start gap-1.5 px-2 py-1.5 rounded-lg text-[9px] font-bold transition-all border ${
-                          previewTheme === t.id
-                            ? "border-purple-500/60 bg-purple-500/10 text-purple-600 dark:text-purple-300"
-                            : isLocked
-                            ? `${theme === 'dark' ? 'border-white/5 bg-white/2 opacity-50' : 'border-black/5 bg-black/2 opacity-40'} cursor-pointer hover:opacity-80`
-                            : `${theme === 'dark' ? 'border-white/10 bg-white/5 hover:border-white/20' : 'border-black/10 bg-black/5 hover:border-black/20'}`
-                        } ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}
-                      >
-                        <span className={`w-2.5 h-2.5 rounded-full border shrink-0 ${theme === 'dark' ? 'border-white/20' : 'border-black/10'}`} style={{ background: t.color }} />
-                        <span className="truncate">{t.label}</span>
-                        {isLocked && <Lock className={`w-2 h-2 shrink-0 ${theme === 'dark' ? 'text-yellow-400' : 'text-yellow-600'}`} />}
-                        {t.pro && accountStatus.tier === "pro" && <Sparkles className="w-2 h-2 text-purple-400 shrink-0" />}
-                      </button>
-                    );
-                  })}
+                <div className="flex flex-col gap-6 w-full sm:w-auto">
+                  {/* Light Themes */}
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 px-1 sm:justify-end opacity-40">
+                      <Sun className="w-3 h-3 text-orange-400" />
+                      <span className="text-[10px] font-black uppercase tracking-wider">Light Themes</span>
+                    </div>
+                    <div className="grid grid-cols-3 xs:grid-cols-4 sm:flex sm:flex-wrap gap-2 sm:justify-end">
+                      {[
+                        { id: "light",   label: "Light",   color: "#ffffff", pro: false },
+                        { id: "snow",    label: "Snow",    color: "#f2f2f2", pro: true },
+                        { id: "sakura",  label: "Sakura",  color: "#FFE4EE", pro: true },
+                        { id: "daydream",  label: "Daydream",  color: "#AFDCF0", pro: true },
+                        { id: "latte",  label: "Latte",  color: "#A67B5B", pro: true },
+                        { id: "ruby",  label: "Ruby",  color: "#E11D48", pro: true },
+                      ].map((t) => renderThemeButton(t))}
+                    </div>
+                  </div>
+
+                  {/* Dark Themes */}
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 px-1 sm:justify-end opacity-40">
+                      <Moon className="w-3 h-3 text-purple-400" />
+                      <span className="text-[10px] font-black uppercase tracking-wider">Dark Themes</span>
+                    </div>
+                    <div className="grid grid-cols-3 xs:grid-cols-4 sm:flex sm:flex-wrap gap-2 sm:justify-end">
+                      {[
+                        { id: "dark",    label: "Dark",    color: "#0d1117", pro: false },
+                        { id: "ocean",   label: "Ocean",   color: "#354f7cff", pro: true },
+                        { id: "sunset",  label: "Sunset",  color: "#8B1D1C", pro: true },
+                        { id: "neon",    label: "Neon",    color: "#0C8", pro: true },
+                        { id: "monokai", label: "Monokai", color: "#3E3D32", pro: true },
+                        { id: "matcha",  label: "Matcha",  color: "#4C6926", pro: true },
+                      ].map((t) => renderThemeButton(t))}
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -360,10 +385,10 @@ export default function Home() {
 
                 <div className="space-y-8">
                   {/* Row 1: Settings Grid */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <div className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
+                    <div className="space-y-6 flex flex-col">
                       {/* Pro Settings Panel */}
-                      <div className={`p-5 rounded-2xl border space-y-5 transition-colors relative group/pro ${
+                      <div className={`p-5 rounded-2xl border space-y-5 transition-colors relative group/pro flex-1 ${
                         accountStatus.tier === 'pro' 
                           ? 'border-purple-500/20 bg-purple-500/5' 
                           : 'border-white/5 bg-white/2'
@@ -460,29 +485,17 @@ export default function Home() {
                             </div>
                           </div>
                           <div className="space-y-1.5 col-span-2">
-                            <p className={`text-[9px] font-bold uppercase opacity-40`}>Output Mode</p>
-                            <button 
-                              disabled={accountStatus.tier !== 'pro'}
-                              onClick={() => accountStatus.tier === 'pro' ? setShowStats(!showStats) : setShowUpgradeModal(true)}
-                              className={`w-full py-2 rounded-lg text-[10px] font-black border transition-all flex items-center justify-center gap-2 cursor-pointer ${
-                                showStats 
-                                  ? 'bg-gradient-to-r from-purple-500 to-blue-500 border-none text-white shadow-md' 
-                                  : 'bg-black/5 dark:bg-white/5 border-black/5 dark:border-white/10 opacity-50 text-current hover:opacity-100'
-                              } ${accountStatus.tier !== 'pro' ? 'cursor-not-allowed' : ''}`}
-                            >
-                              {showStats ? <Sparkles className="w-3 h-3" /> : <Layout className="w-3 h-3" />}
-                              {showStats ? 'STATS CARD' : 'CONTRIBUTION GRAPH'}
-                            </button>
+                            {/* Output Mode removed as requested */}
                           </div>
                         </div>
                       </div>
                     </div>
-                    <div className="space-y-6">
-                      <div className={`p-5 rounded-2xl border flex flex-col h-full transition-colors border-white/5 bg-white/2`}>
-                        <div className="space-y-6 flex-1">
+                    <div className="space-y-6 relative">
+                      <div className={`md:absolute md:inset-0 p-5 rounded-2xl border flex flex-col transition-colors border-white/5 bg-white/2`}>
+                        <div className="space-y-4 flex flex-col h-full min-h-0">
                           <div className="space-y-4">
                             <label className="text-[10px] font-black opacity-50 uppercase tracking-widest flex items-center gap-2">
-                              {t("export_title") || "Export Mode"}
+                              {t("export_title") === "export_title" ? "Export Mode" : t("export_title")}
                             </label>
                             <div className="flex bg-black/5 dark:bg-white/10 p-1 rounded-xl border border-black/5 dark:border-white/10">
                               {['markdown', 'html', 'link'].map((style) => (
@@ -501,12 +514,16 @@ export default function Home() {
                             </div>
                           </div>
 
-                          <div className="space-y-3">
+                          <div className="space-y-3 flex-1 flex flex-col min-h-0">
                             <label className={`text-[10px] font-black uppercase tracking-widest flex items-center gap-2 opacity-50`}>
-                              <Terminal className="w-3 h-3" /> {t("result_title") || "Resulting Code"}
+                              <Terminal className="w-3 h-3" /> {t("result_title") === "result_title" ? "Resulting Code" : t("result_title")}
                             </label>
-                            <div className="relative group h-20">
-                              <pre className={`p-5 pr-16 rounded-xl font-mono text-[10px] border overflow-y-scroll overflow-x-auto min-h-[90px] flex items-center transition-colors bg-black/5 dark:bg-black/40 text-purple-600 dark:text-gitlab-purple border-black/5 dark:border-white/10`}>
+                            <div className="relative group flex-1 min-h-0">
+                              <pre 
+                                className={`p-4 pr-12 rounded-xl font-mono text-[10px] border h-full transition-colors bg-black/5 dark:bg-black/40 text-purple-600 dark:text-gitlab-purple border-black/5 dark:border-white/10 break-all whitespace-pre-wrap overflow-y-auto`}
+                                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                              >
+                                <style dangerouslySetInnerHTML={{__html: `pre::-webkit-scrollbar { display: none; }`}} />
                                 <code>{getFormattedCode()}</code>
                               </pre>
                               <button 

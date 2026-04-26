@@ -1,7 +1,7 @@
 import { ContributionData } from "@/lib/types";
 import { mergeContributions } from "./data-merger";
 
-export type ThemeName = "dark" | "light" | "ocean" | "sunset" | "neon" | "monokai" | "sakura";
+export type ThemeName = "dark" | "light" | "ocean" | "sunset" | "neon" | "monokai" | "sakura" | "matcha" | "snow" | "daydream" | "latte" | "ruby";
 export type CellSize = "S" | "M" | "L" | "XL";
 export type GraphLayout = "horizontal" | "vertical";
 
@@ -17,45 +17,84 @@ interface ThemeColors {
 const THEMES: Record<ThemeName, ThemeColors> = {
   dark: {
     bg: "#0d1117", text: "#8b949e", empty: "#161b22",
-    github:  ["#0e4429", "#006d32", "#26a641", "#39d353", "#a1eba0"],
-    gitlab:  ["#4a1a15", "#812a1d", "#b53523", "#e24329", "#ff8f7e"],
-    merged:  ["#2d1a4d", "#4c2889", "#6b4fbb", "#9a70ff", "#c8b2ff"],
+    github: ["#0e4429", "#006d32", "#26a641", "#39d353", "#50fa7b"],
+    gitlab: ["#4a1a15", "#812a1d", "#b53523", "#e24329", "#ff5555"],
+    merged: ["#2d1a4d", "#4c2889", "#6b4fbb", "#9a70ff", "#bd93f9"],
   },
   light: {
-    bg: "#ffffff", text: "#475569", empty: "#ebedf0",
-    github:  ["#9be9a8", "#7bc96f", "#40c463", "#30a14e", "#216e39"],
-    gitlab:  ["#ffdfc4", "#ffb380", "#ff8c42", "#e65100", "#bf360c"],
-    merged:  ["#e9d5ff", "#c084fc", "#a855f7", "#9333ea", "#7e22ce"],
+    bg: "#ffffff", text: "#57606a", empty: "#ebedf0",
+    github: ["#9be9a8", "#40c463", "#30a14e", "#216e39", "#195127"],
+    gitlab: ["#ffd6d1", "#ff8a7a", "#e24329", "#a11d0a", "#7a1205"],
+    merged: ["#d8b4fe", "#a855f7", "#7c3aed", "#5b21b6", "#4c1d95"],
   },
+
   ocean: {
-    bg: "#0a1628", text: "#64b5f6", empty: "#0d2137",
-    github:  ["#0d3b6e", "#1565c0", "#1976d2", "#1e88e5", "#42a5f5"],
-    gitlab:  ["#1a237e", "#283593", "#3949ab", "#5c6bc0", "#7986cb"],
-    merged:  ["#004d40", "#00695c", "#00897b", "#26c6da", "#4dd0e1"],
+    bg: "#0a1628", text: "#64b5f6", empty: "#112240",
+    github: ["#0d3b6e", "#115293", "#1976d2", "#2196f3", "#64b5f6"],
+    gitlab: ["#1a237e", "#283593", "#3949ab", "#5c6bc0", "#8c9eff"],
+    merged: ["#004d40", "#00695c", "#00897b", "#00bfa5", "#1de9b6"],
   },
+
   sunset: {
-    bg: "#1a0f0f", text: "#ff8a65", empty: "#2d1a1a",
-    github:  ["#4a2a1a", "#7a3a1a", "#a3491a", "#ff5722", "#ff7043"],
-    gitlab:  ["#4a1a1a", "#811d1d", "#b52323", "#f44336", "#ef5350"],
-    merged:  ["#2d1a4d", "#4c2889", "#6b4fbb", "#9a70ff", "#b388ff"],
+    bg: "#1a0f0f", text: "#ffb74d", empty: "#2d1a1a",
+    github: ["#4e200c", "#8d3813", "#d8561c", "#ff7043", "#ff9e80"],
+    gitlab: ["#4a1111", "#8b1c1c", "#d32f2f", "#ef5350", "#ff8a80"],
+    merged: ["#4a144a", "#7b1fa2", "#ab47bc", "#e066ff", "#ea80fc"],
   },
+
   neon: {
-    bg: "#000000", text: "#00ffcc", empty: "#1a1a1a",
-    github:  ["#003322", "#006644", "#009966", "#00cc88", "#00ffcc"],
-    gitlab:  ["#330000", "#660000", "#990000", "#cc0000", "#ff0000"],
-    merged:  ["#220033", "#440066", "#660099", "#8800cc", "#cc00ff"],
+    bg: "#050505", text: "#00ffcc", empty: "#141414",
+    github: ["#003322", "#006644", "#00cc88", "#00ffcc", "#aaffff"],
+    gitlab: ["#330011", "#660022", "#cc0044", "#ff0055", "#ff6699"],
+    merged: ["#110033", "#220066", "#4400cc", "#7700ff", "#b366ff"],
   },
+
   monokai: {
     bg: "#272822", text: "#f8f8f2", empty: "#3e3d32",
-    github:  ["#4a4a1a", "#7a7a1a", "#a3a31a", "#e6db74", "#f0e68c"],
-    gitlab:  ["#4a2a1a", "#7a4a1a", "#a36a1a", "#fd971f", "#ffb347"],
-    merged:  ["#2d1a4d", "#4c2889", "#6b4fbb", "#ae81ff", "#d7beff"],
+    github: ["#2b3618", "#4d6521", "#74982a", "#a6e22e", "#c4f068"],
+    gitlab: ["#38111d", "#741b39", "#b92055", "#f92672", "#fc689d"],
+    merged: ["#1b343a", "#295b68", "#4292a8", "#66d9ef", "#9aebfa"],
   },
+
+
+  matcha: {
+    bg: "#1e201e", text: "#e0e0c5", empty: "#2c302c",
+    github: ["#283618", "#384a20", "#4c6926", "#606c38", "#a3b18a"],
+    gitlab: ["#4a2c11", "#754013", "#bc6c25", "#dda15e", "#fefae0"],
+    merged: ["#183630", "#215247", "#2d7a68", "#40a38d", "#7acfc0"],
+  },
+
+  // Pro Light Themes
   sakura: {
-    bg: "#160912", text: "#f472b6", empty: "#2d1424",
-    github:  ["#4a1a3a", "#7a1a5a", "#a31a7a", "#ec4899", "#f472b6"],
-    gitlab:  ["#4a1a1a", "#7a1a1a", "#a31a1a", "#f43f5e", "#fb7185"],
-    merged:  ["#2d1a4d", "#4c2889", "#6b4fbb", "#d946ef", "#e879f9"],
+    bg: "#fff5f8", text: "#885566", empty: "#ffe4ee",
+    github: ["#ffcce0", "#ffa6c9", "#ff80b3", "#ff599c", "#f03284"],
+    gitlab: ["#ffd9d6", "#ffb3ad", "#fc8880", "#eb5d54", "#cc3e35"],
+    merged: ["#e8dcff", "#c8b3fa", "#a88cf0", "#8663de", "#633eb3"],
+  },
+
+  snow: {
+    bg: "#ffffff", text: "#334155", empty: "#f1f5f9",
+    github: ["#dcfce7", "#86efac", "#4ade80", "#16a34a", "#14532d"],
+    gitlab: ["#fee2e2", "#fca5a5", "#f87171", "#dc2626", "#7f1d1d"],
+    merged: ["#e0f2fe", "#7dd3fc", "#38bdf8", "#0284c7", "#0c4a6e"],
+  },
+  latte: {
+    bg: "#faf8f5", text: "#4a3018", empty: "#ebe3d5",
+    github: ["#eedfc8", "#d2b48c", "#a67b5b", "#8b4513", "#5c3a21"],
+    gitlab: ["#fde0c6", "#f8b179", "#f28532", "#c95200", "#8a3800"],
+    merged: ["#e4dcf1", "#c1aee2", "#9e80d3", "#744bbf", "#4b2a85"],
+  },
+  daydream: {
+    bg: "#f4f9fb", text: "#3b5b71", empty: "#e1eef4",
+    github: ["#dcf0f7", "#aedcf0", "#7ac4e8", "#45abdf", "#1c8cc5"],
+    gitlab: ["#fae3eb", "#f0b6cb", "#e685aa", "#d95386", "#b3275c"],
+    merged: ["#ebebf9", "#cdd0f1", "#a9aeea", "#8088e1", "#5962d6"],
+  },
+  ruby: {
+    bg: "#ffffff", text: "#27272a", empty: "#f4f4f5",
+    github: ["#fef08a", "#facc15", "#eab308", "#ca8a04", "#854d0e"],
+    gitlab: ["#fecdd3", "#fda4af", "#f43f5e", "#e11d48", "#9f1239"],
+    merged: ["#e9d5ff", "#d8b4fe", "#a855f7", "#7e22ce", "#581c87"],
   },
 };
 
@@ -82,9 +121,9 @@ export function generateSVG(
   userTier: "free" | "pro" = "free"
 ): string {
   const isPro = userTier === "pro";
-  
-  const theme = (options.theme && isPro) || options.theme === "dark" || options.theme === "light" 
-    ? (options.theme as ThemeName) 
+
+  const theme = (options.theme && isPro) || options.theme === "dark" || options.theme === "light"
+    ? (options.theme as ThemeName)
     : "light";
   const weeks = isPro ? (options.weeks || 52) : 52;
   const cellSizeVal = isPro ? CELL_SIZES[options.cellSize || "M"] : CELL_SIZES.L;
@@ -94,16 +133,16 @@ export function generateSVG(
 
   const colors = THEMES[theme] || THEMES.light;
   const gap = Math.max(2, Math.round(cellSizeVal * 0.2));
-  
+
   const isVertical = layout === "vertical";
   const leftPadding = isVertical ? 75 : 40; // More space for months in vertical
   const topPadding = title ? 60 : 40;
   const footerHeight = isVertical ? 65 : 40; // Taller footer for vertical
   const watermarkHeight = (!hideWatermark && !isPro) ? 15 : 0;
-  
+
   const mainWidth = isVertical ? (7 * (cellSizeVal + gap) + 10) : (weeks * (cellSizeVal + gap) + 10);
   const mainHeight = isVertical ? (weeks * (cellSizeVal + gap) + 10) : (7 * (cellSizeVal + gap) + 10);
-  
+
   const width = mainWidth + leftPadding + 40;
   const height = mainHeight + topPadding + footerHeight + watermarkHeight;
 
@@ -113,19 +152,18 @@ export function generateSVG(
 
   const getLevel = (count: number) => {
     if (count === 0) return 0;
-    // 5 active levels (1-5)
-    if (count <= Math.ceil(maxVal * 0.10)) return 1;
-    if (count <= Math.ceil(maxVal * 0.30)) return 2;
-    if (count <= Math.ceil(maxVal * 0.50)) return 3;
-    if (count <= Math.ceil(maxVal * 0.75)) return 4;
-    return 5;
+    // Fixed thresholds as requested
+    if (count >= 10) return 4;
+    if (count >= 6) return 3;
+    if (count >= 3) return 2;
+    return 1;
   };
 
   const getCellColor = (date: string) => {
     const count = contributions[date] || 0;
     const level = getLevel(count);
     if (level === 0) return colors.empty;
-    
+
     const idx = level - 1; // 0-4 index for the 5-color arrays
     if (gitlabData[date] && githubData[date]) return colors.merged[idx];
     if (gitlabData[date]) return colors.gitlab[idx];
@@ -143,7 +181,7 @@ export function generateSVG(
       const currentDate = new Date(startDate);
       currentDate.setDate(startDate.getDate() + (w * 7) + d);
       const dateStr = currentDate.toISOString().split("T")[0];
-      
+
       const x = isVertical ? leftPadding + d * (cellSizeVal + gap) : leftPadding + w * (cellSizeVal + gap);
       const y = isVertical ? topPadding + w * (cellSizeVal + gap) : topPadding + d * (cellSizeVal + gap);
       const color = getCellColor(dateStr);
@@ -154,12 +192,12 @@ export function generateSVG(
   let labels = "";
   const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
   const days = ["Mon", "Wed", "Fri"];
-  
+
   if (isVertical) {
     // Days Header (Narrow)
     days.forEach((day, i) => {
       const x = leftPadding + (i * 2 + 1) * (cellSizeVal + gap);
-      labels += `<text x="${x + cellSizeVal/2}" y="${topPadding - 8}" font-size="8" fill="${colors.text}" text-anchor="middle" font-weight="bold">${day}</text>\n`;
+      labels += `<text x="${x + cellSizeVal / 2}" y="${topPadding - 8}" font-size="8" fill="${colors.text}" text-anchor="middle" font-weight="bold">${day}</text>\n`;
     });
 
     // Vertical Month Labels
