@@ -65,7 +65,7 @@ export async function GET(
   }
 
   try {
-    const user = await (prisma.user as any).findFirst({
+    const user = await prisma.user.findFirst({
       where: { name: decodedUsername },
       select: { id: true, name: true, tier: true, accounts: true },
     });
@@ -97,21 +97,31 @@ export async function GET(
     const title        = isPro ? requestedTitle : undefined;
     const hideWatermark = isPro && requestedHideWm;
 
+    // Fetch both platforms in parallel for maximum speed
+    const fetchPromises = user.accounts.map(async (account: any) => {
+      const rawToken = account.encrypted_access_token || account.access_token;
+      if (!rawToken) return null;
+      
+      const token = decrypt(rawToken);
+      if (account.provider === "github") {
+        return { provider: "github", data: await new GitHubService(token).fetchContributions() };
+      } else if (account.provider === "gitlab") {
+        const instanceUrl = account.instance_url || "https://gitlab.com";
+        return { provider: "gitlab", data: await new GitLabService(token, user.name || "", instanceUrl).fetchContributions() };
+      }
+      return null;
+    });
+
+    const results = await Promise.all(fetchPromises);
+    
     let githubData: Record<string, number> = {};
     let gitlabData: Record<string, number> = {};
 
-    for (const account of user.accounts) {
-      const rawToken = account.encrypted_access_token || account.access_token;
-      if (!rawToken) continue;
-      const token = decrypt(rawToken);
-
-      if (account.provider === "github") {
-        githubData = await new GitHubService(token).fetchContributions();
-      } else if (account.provider === "gitlab") {
-        const instanceUrl = (account as any).instance_url || "https://gitlab.com";
-        gitlabData = await new GitLabService(token, user.name || "", instanceUrl).fetchContributions();
-      }
-    }
+    results.forEach(res => {
+      if (!res) return;
+      if (res.provider === "github") githubData = res.data;
+      if (res.provider === "gitlab") gitlabData = res.data;
+    });
 
     const svg = generateSVG(
       githubData,

@@ -10,8 +10,14 @@ export async function GET() {
   }
 
   try {
-    const user = await (prisma.user as any).findUnique({
-      where: { id: (session.user as any).id },
+    const userId = (session.user as any).id;
+    if (!userId) {
+      console.error("❌ No userId found in session");
+      return NextResponse.json({ error: "No userId in session" }, { status: 400 });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
       select: {
         tier: true,
         accounts: { select: { provider: true } },
@@ -25,7 +31,11 @@ export async function GET() {
       gitlab: providers.includes("gitlab"),
       tier: (user?.tier ?? "free") as "free" | "pro",
     });
-  } catch (error) {
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+  } catch (error: any) {
+    console.error("❌ User Status API Error:", error.message || error);
+    return NextResponse.json({ 
+      error: "Internal Server Error",
+      details: error.message 
+    }, { status: 500 });
   }
 }
