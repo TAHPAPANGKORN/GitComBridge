@@ -1,5 +1,6 @@
 import { ContributionData } from "@/lib/types";
 import { mergeContributions } from "./data-merger";
+import { format, subDays, startOfWeek, eachDayOfInterval } from "date-fns";
 
 export type ThemeName = "dark" | "light" | "ocean" | "sunset" | "neon" | "monokai" | "sakura" | "matcha" | "snow" | "daydream" | "latte" | "ruby";
 export type CellSize = "S" | "M" | "L" | "XL";
@@ -112,6 +113,7 @@ export interface SVGOptions {
   layout?: GraphLayout;
   title?: string;
   hideWatermark?: boolean;
+  timezone?: string;
 }
 
 function escapeHtml(unsafe: string) {
@@ -129,16 +131,25 @@ export function generateSVG(
   options: SVGOptions = {},
   userTier: "free" | "pro" = "free"
 ): string {
+  const {
+    theme: optTheme = "light",
+    weeks: optWeeks = 52,
+    cellSize: optCellSize = "M",
+    layout: optLayout = "horizontal",
+    title: optTitle = "",
+    hideWatermark: optHideWatermark = false,
+    timezone = "Asia/Bangkok",
+  } = options;
+
   const isPro = userTier === "pro";
 
-  const theme = (options.theme && isPro) || options.theme === "dark" || options.theme === "light"
-    ? (options.theme as ThemeName)
-    : "light";
-  const weeks = isPro ? (options.weeks || 52) : 52;
-  const cellSizeVal = isPro ? CELL_SIZES[options.cellSize || "M"] : CELL_SIZES.L;
-  const layout = isPro ? (options.layout || "horizontal") : "horizontal";
-  const title = isPro ? (options.title || "") : "";
-  const hideWatermark = isPro && options.hideWatermark;
+  // Tier-based defaults & restrictions
+  const theme    = (isPro && optTheme) || optTheme === "dark" || optTheme === "light" ? (optTheme as ThemeName) : "light";
+  const weeks    = isPro ? (optWeeks || 52) : 52;
+  const cellSizeVal = isPro ? CELL_SIZES[optCellSize || "M"] : CELL_SIZES.L;
+  const layout   = isPro ? (optLayout || "horizontal") : "horizontal";
+  const title    = isPro ? (optTitle || "") : "";
+  const hideWatermark = isPro && optHideWatermark;
 
   const colors = THEMES[theme] || THEMES.light;
   const gap = Math.max(2, Math.round(cellSizeVal * 0.2));
@@ -179,23 +190,29 @@ export function generateSVG(
     return colors.github[idx];
   };
 
+  // 🌐 Get current date in requested timezone
+  const now = new Date(new Date().toLocaleString("en-US", { timeZone: timezone }));
+  now.setHours(0, 0, 0, 0);
+
+  const startDate = subDays(now, (weeks * 7) - 1);
+  const calendarStart = startOfWeek(startDate); // Defaults to Sunday
+  const daysInterval = eachDayOfInterval({ start: calendarStart, end: now });
+
   let gridItems = "";
-  const now = new Date();
-  const dayOfWeek = now.getDay();
-  const startDate = new Date();
-  startDate.setDate(now.getDate() - (weeks * 7) + (6 - dayOfWeek));
+  let weekIndex = 0;
 
-  for (let w = 0; w < weeks; w++) {
-    for (let d = 0; d < 7; d++) {
-      const currentDate = new Date(startDate);
-      currentDate.setDate(startDate.getDate() + (w * 7) + d);
-      const dateStr = currentDate.toISOString().split("T")[0];
+  for (let i = 0; i < daysInterval.length; i++) {
+    const day = daysInterval[i];
+    const dateStr = format(day, "yyyy-MM-dd");
+    const dayInWeek = i % 7;
 
-      const x = isVertical ? leftPadding + d * (cellSizeVal + gap) : leftPadding + w * (cellSizeVal + gap);
-      const y = isVertical ? topPadding + w * (cellSizeVal + gap) : topPadding + d * (cellSizeVal + gap);
-      const color = getCellColor(dateStr);
-      gridItems += `<rect x="${x}" y="${y}" width="${cellSizeVal}" height="${cellSizeVal}" fill="${color}" rx="${Math.max(1, cellSizeVal * 0.12)}" />\n`;
-    }
+    const x = isVertical ? leftPadding + dayInWeek * (cellSizeVal + gap) : leftPadding + weekIndex * (cellSizeVal + gap);
+    const y = isVertical ? topPadding + weekIndex * (cellSizeVal + gap) : topPadding + dayInWeek * (cellSizeVal + gap);
+    
+    const color = getCellColor(dateStr);
+    gridItems += `<rect x="${x}" y="${y}" width="${cellSizeVal}" height="${cellSizeVal}" fill="${color}" rx="${Math.max(1, cellSizeVal * 0.12)}" />\n`;
+
+    if (dayInWeek === 6) weekIndex++;
   }
 
   let labels = "";
