@@ -69,9 +69,13 @@ export async function POST() {
 
     return NextResponse.json({ url: checkoutSession.url });
   } catch (error: any) {
-    console.error("❌ Stripe checkout error:", error.message);
+    console.error("❌ Stripe checkout error:", error.message || error);
     return NextResponse.json(
-      { error: "Internal Server Error" }, 
+      { 
+        error: "Internal Server Error", 
+        details: error.message,
+        hint: !process.env.STRIPE_SECRET_KEY ? "Missing STRIPE_SECRET_KEY" : "Check DB connection"
+      }, 
       { status: 500 }
     );
   }
