@@ -44,13 +44,20 @@ export async function POST() {
       });
     }
 
-    // Create one-time Checkout Session ($9 USD)
+    // Create one-time Checkout Session (350 THB ~ $9.99)
     const checkoutSession = await stripe.checkout.sessions.create({
       customer: customerId,
-      payment_method_types: ["card"],
+      payment_method_types: ["card", "promptpay"],
       line_items: [
         {
-          price: process.env.STRIPE_PRICE_ID!,
+          price_data: {
+            currency: "thb",
+            product_data: {
+              name: "GitComBridge Pro Lifetime Access",
+              description: "Unlock all premium themes, layouts, and custom sizes forever.",
+            },
+            unit_amount: 35000, // 350.00 THB
+          },
           quantity: 1,
         },
       ],

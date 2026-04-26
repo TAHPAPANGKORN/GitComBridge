@@ -133,14 +133,14 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
                {/* Background Glow */}
                <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 via-transparent to-blue-500/10 opacity-50" />
                
-               <div className="relative flex items-baseline gap-2">
-                 <span className="text-6xl sm:text-7xl font-black tracking-tighter">$9</span>
-                 <div className="flex flex-col">
-                   <span className="text-2xl font-black tracking-tight">.99</span>
-                   <span className="text-xs sm:text-sm font-black text-purple-400">{txt.currency}</span>
-                   <span className="text-[10px] sm:text-xs font-bold opacity-30 uppercase tracking-widest">{txt.billing}</span>
-                 </div>
-               </div>
+                <div className="relative flex items-baseline gap-2">
+                  <span className="text-6xl sm:text-7xl font-black tracking-tighter">350</span>
+                  <div className="flex flex-col">
+                    <span className="text-2xl font-black tracking-tight">฿</span>
+                    <span className="text-xs sm:text-sm font-black text-purple-400">THB</span>
+                    <span className="text-[10px] sm:text-xs font-bold opacity-30 uppercase tracking-widest">{txt.billing}</span>
+                  </div>
+                </div>
             </div>
 
             {/* Feature Comparison */}
@@ -200,7 +200,7 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
               <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 mt-4 sm:mt-6 opacity-30 text-[8px] sm:text-[9px] font-bold uppercase tracking-tighter">
                 <span>{txt.noSub}</span>
                 <span className="hidden sm:inline w-1 h-1 rounded-full bg-current" />
-                <span>{txt.oneTime}</span>
+                <span>PromptPay / Card</span>
                 <span className="hidden sm:inline w-1 h-1 rounded-full bg-current" />
                 <span>{txt.secure}</span>
               </div>
