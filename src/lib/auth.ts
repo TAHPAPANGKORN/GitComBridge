@@ -53,6 +53,9 @@ export const authOptions: NextAuthOptions = {
             data: {
               encrypted_access_token: encryptedAccessToken,
               encrypted_refresh_token: encryptedRefreshToken,
+              // 🔐 Clear plaintext tokens for security
+              access_token: null,
+              refresh_token: null,
             },
           });
         }

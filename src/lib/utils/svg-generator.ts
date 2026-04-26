@@ -114,6 +114,15 @@ export interface SVGOptions {
   hideWatermark?: boolean;
 }
 
+function escapeHtml(unsafe: string) {
+  return unsafe
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 export function generateSVG(
   githubData: ContributionData,
   gitlabData: ContributionData,
@@ -238,7 +247,7 @@ export function generateSVG(
       <style>@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&amp;display=swap'); text { font-family: 'Inter', sans-serif; }</style>
       ${neonFilter}
       <rect width="100%" height="100%" fill="${colors.bg}" rx="8" />
-      ${title ? `<text x="20" y="35" font-size="18" font-weight="900" fill="${colors.text}">${title}</text>` : ""}
+      ${title ? `<text x="20" y="35" font-size="18" font-weight="900" fill="${colors.text}">${escapeHtml(title)}</text>` : ""}
       <g ${theme === "neon" ? 'filter="url(#neon-glow)"' : ""}>${gridItems}</g>
       ${labels}
       
