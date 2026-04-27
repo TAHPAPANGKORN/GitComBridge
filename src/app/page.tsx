@@ -92,7 +92,7 @@ export default function Home() {
     }
   }, []);
 
-  const [codeStyle, setCodeStyle] = useState<'markdown' | 'html' | 'link'>('markdown');
+  const [codeStyle, setCodeStyle] = useState<'markdown' | 'html' | 'interactive' | 'link'>('markdown');
 
   useEffect(() => {
     const fetchStatus = async () => {
@@ -138,6 +138,7 @@ export default function Home() {
     const url = getFinalUrl(previewTheme) || "";
     if (codeStyle === 'markdown') return `![GitComBridge Unified Graph](${url})`;
     if (codeStyle === 'html') return `<p align="center">\n  <img src="${url}" alt="GitComBridge" />\n</p>`;
+    if (codeStyle === 'interactive') return `<p align="center">\n  <object type="image/svg+xml" data="${url}" width="100%"></object>\n</p>`;
     return `<p align="center">\n  <a href="${baseUrl}">\n    <img src="${url}" alt="GitComBridge" />\n  </a>\n</p>`;
   };
 
@@ -593,7 +594,7 @@ export default function Home() {
                               {t("export_title")}
                             </label>
                             <div className="flex bg-black/5 dark:bg-white/10 p-1 rounded-xl border border-black/5 dark:border-white/10">
-                              {['markdown', 'html', 'link'].map((style) => (
+                              {['markdown', 'html', 'interactive', 'link'].map((style) => (
                                 <button
                                   key={style}
                                   onClick={() => setCodeStyle(style as any)}
@@ -603,7 +604,7 @@ export default function Home() {
                                       : 'text-gray-500 dark:text-current opacity-40 hover:bg-black/5 dark:hover:bg-white/5'
                                   }`}
                                 >
-                                  {style}
+                                  {style === 'interactive' ? 'HTML (Pro)' : style}
                                 </button>
                               ))}
                             </div>
@@ -628,6 +629,16 @@ export default function Home() {
                                 {copied ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
                               </button>
                             </div>
+                            {codeStyle === 'markdown' && (
+                              <p className="text-[10px] opacity-40 flex items-center gap-1.5 px-1">
+                                <Info className="w-3 h-3" /> Note: Hover effects are disabled in Markdown/GitHub. Use HTML (Pro) for interaction.
+                              </p>
+                            )}
+                            {codeStyle === 'interactive' && (
+                              <p className="text-[10px] text-purple-400/80 font-bold flex items-center gap-1.5 px-1">
+                                <Sparkles className="w-3 h-3" /> Tip: Use this tag in your personal blog or website for hover interactions!
+                              </p>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -640,7 +651,15 @@ export default function Home() {
                       <label className="text-xs font-black opacity-50 uppercase tracking-widest flex items-center gap-2">
                         <Maximize2 className="w-3 h-3" /> {t('visual_output')}
                       </label>
-                      <span className="text-[10px] font-bold text-purple-400/60 uppercase">{t('realtime_preview')}</span>
+                      <div className="flex flex-wrap items-center gap-4">
+                        <span className="flex items-center gap-1.5 text-[10px] font-black text-green-400/80 bg-green-500/10 px-2.5 py-1 rounded-full border border-green-500/20 uppercase tracking-widest shadow-[0_0_15px_rgba(34,197,94,0.1)]">
+                          <MousePointer2 className="w-3 h-3 animate-bounce" /> {t('interactive_enabled')}
+                        </span>
+                        <span className="flex items-center gap-1.5 text-[10px] font-bold text-purple-400/60 bg-purple-500/5 px-2.5 py-1 rounded-full border border-purple-500/10 uppercase tracking-widest">
+                          <Info className="w-3 h-3" /> {t('hover_hint')}
+                        </span>
+                        <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-auto">{t('realtime_preview')}</span>
+                      </div>
                     </div>
                     
                     <div className="glass-card p-8 flex items-center justify-center min-h-[350px] relative transition-all overflow-hidden border-black/5 dark:border-white/5 bg-black/5 dark:bg-[#0d1117]">
@@ -651,13 +670,26 @@ export default function Home() {
                         </div>
                       )}
                       
-                      <div className="w-full flex justify-center z-10">
-                        <img 
-                          src={getFinalUrl(previewTheme) as string} 
-                          alt="Preview" 
+                      <div className="w-full flex justify-center z-10 pointer-events-auto">
+                        <object 
+                          key={getFinalUrl(previewTheme)}
+                          data={getFinalUrl(previewTheme) as string} 
+                          type="image/svg+xml"
                           onLoad={() => setIsLoading(false)}
-                          className={`max-w-full h-auto drop-shadow-2xl transition-all duration-500 hover:scale-[1.01] ${isLoading ? 'opacity-0' : 'opacity-100'} rounded-lg border border-white/5`}
-                        />
+                          className={`max-w-full h-auto drop-shadow-2xl transition-all duration-500  ${isLoading ? 'opacity-0' : 'opacity-100'} rounded-lg`}
+                        >
+                          {/* Fallback to img if object fails */}
+                          <img 
+                            src={getFinalUrl(previewTheme) as string} 
+                            alt="Preview Fallback"
+                            className="max-w-full h-auto rounded-lg"
+                          />
+                        </object>
+                        {isLoading && (
+                           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                              <Loader2 className="w-8 h-8 animate-spin text-purple-500" />
+                           </div>
+                        )}
                       </div>
                     </div>
                   </div>

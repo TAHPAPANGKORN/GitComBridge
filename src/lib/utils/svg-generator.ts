@@ -244,7 +244,11 @@ export function generateSVG(
     const level = getLevel(count);
     const color = getCellColor(dateStr);
     
-    return { day, dateStr, dayInWeek, weekIdx, count, level, color, i };
+    let type = "gh";
+    if (gitlabData[dateStr] && githubData[dateStr]) type = "mg";
+    else if (gitlabData[dateStr]) type = "gl";
+
+    return { day, dateStr, dayInWeek, weekIdx, count, level, color, type, i };
   });
 
   // Sort for Isometric: Back-to-Front (Smaller week + day first)
@@ -257,7 +261,8 @@ export function generateSVG(
 
   let gridItems = "";
   for (const item of gridData) {
-    const { dayInWeek, weekIdx, color, count, level, i } = item;
+    const { dayInWeek, weekIdx, color, count, level, type, i } = item;
+    const typeClass = `type-${type}`;
 
     
     let animationStyle = "";
@@ -294,25 +299,25 @@ export function generateSVG(
       const strokeColor = darkenColor(color, 60);
 
       if (count > 0) {
-        gridItems += `<path d="M${isoX} ${isoY} L${isoX - cellSizeVal * 0.9} ${isoY - cellSizeVal * 0.45} L${isoX - cellSizeVal * 0.9} ${isoY - cellSizeVal * 0.45 - h} L${isoX} ${isoY - h} Z" fill="${leftColor}" stroke="${strokeColor}" stroke-width="0.1" class="lvl-${level}" />\n`;
-        gridItems += `<path d="M${isoX} ${isoY} L${isoX + cellSizeVal * 0.9} ${isoY - cellSizeVal * 0.45} L${isoX + cellSizeVal * 0.9} ${isoY - cellSizeVal * 0.45 - h} L${isoX} ${isoY - h} Z" fill="${rightColor}" stroke="${strokeColor}" stroke-width="0.1" class="lvl-${level}" />\n`;
+        gridItems += `<path d="M${isoX} ${isoY} L${isoX - cellSizeVal * 0.9} ${isoY - cellSizeVal * 0.45} L${isoX - cellSizeVal * 0.9} ${isoY - cellSizeVal * 0.45 - h} L${isoX} ${isoY - h} Z" fill="${leftColor}" stroke="${strokeColor}" stroke-width="0.1" class="lvl-${level} ${typeClass}" />\n`;
+        gridItems += `<path d="M${isoX} ${isoY} L${isoX + cellSizeVal * 0.9} ${isoY - cellSizeVal * 0.45} L${isoX + cellSizeVal * 0.9} ${isoY - cellSizeVal * 0.45 - h} L${isoX} ${isoY - h} Z" fill="${rightColor}" stroke="${strokeColor}" stroke-width="0.1" class="lvl-${level} ${typeClass}" />\n`;
       }
       
-      gridItems += `<path d="M${isoX} ${isoY - h} L${isoX + cellSizeVal * 0.9} ${isoY - h - cellSizeVal * 0.45} L${isoX} ${isoY - h - cellSizeVal * 0.9} L${isoX - cellSizeVal * 0.9} ${isoY - h - cellSizeVal * 0.45} Z" fill="${topColor}" stroke="${strokeColor}" stroke-width="0.1" class="lvl-${level}" ${animationStyle} />\n`;
+      gridItems += `<path d="M${isoX} ${isoY - h} L${isoX + cellSizeVal * 0.9} ${isoY - h - cellSizeVal * 0.45} L${isoX} ${isoY - h - cellSizeVal * 0.9} L${isoX - cellSizeVal * 0.9} ${isoY - h - cellSizeVal * 0.45} Z" fill="${topColor}" stroke="${strokeColor}" stroke-width="0.1" class="lvl-${level} ${typeClass}" ${animationStyle} />\n`;
     } else {
       // 🟦 Standard Flat View
       const x = isVertical ? offsetX + dayInWeek * (cellSizeVal + gap) : offsetX + weekIdx * (cellSizeVal + gap);
       const y = isVertical ? offsetY + weekIdx * (cellSizeVal + gap) : offsetY + dayInWeek * (cellSizeVal + gap);
 
       if (shape === "circle") {
-        gridItems += `<circle cx="${x + cellSizeVal/2}" cy="${y + cellSizeVal/2}" r="${cellSizeVal/2}" fill="${color}" class="lvl-${level}" ${animationStyle} />\n`;
+        gridItems += `<circle cx="${x + cellSizeVal/2}" cy="${y + cellSizeVal/2}" r="${cellSizeVal/2}" fill="${color}" class="lvl-${level} ${typeClass}" ${animationStyle} />\n`;
       } else if (shape === "diamond") {
         const s = cellSizeVal / 2;
-        gridItems += `<path d="M${x + s} ${y} L${x + cellSizeVal} ${y + s} L${x + s} ${y + cellSizeVal} L${x} ${y + s} Z" fill="${color}" class="lvl-${level}" ${animationStyle} />\n`;
+        gridItems += `<path d="M${x + s} ${y} L${x + cellSizeVal} ${y + s} L${x + s} ${y + cellSizeVal} L${x} ${y + s} Z" fill="${color}" class="lvl-${level} ${typeClass}" ${animationStyle} />\n`;
       } else if (shape === "leaf") {
-        gridItems += `<rect x="${x}" y="${y}" width="${cellSizeVal}" height="${cellSizeVal}" fill="${color}" rx="${cellSizeVal}" ry="${cellSizeVal * 0.2}" class="lvl-${level}" ${animationStyle} />\n`;
+        gridItems += `<rect x="${x}" y="${y}" width="${cellSizeVal}" height="${cellSizeVal}" fill="${color}" rx="${cellSizeVal}" ry="${cellSizeVal * 0.2}" class="lvl-${level} ${typeClass}" ${animationStyle} />\n`;
       } else {
-        gridItems += `<rect x="${x}" y="${y}" width="${cellSizeVal}" height="${cellSizeVal}" fill="${color}" rx="${Math.max(1, cellSizeVal * 0.12)}" class="lvl-${level}" ${animationStyle} />\n`;
+        gridItems += `<rect x="${x}" y="${y}" width="${cellSizeVal}" height="${cellSizeVal}" fill="${color}" rx="${Math.max(1, cellSizeVal * 0.12)}" class="lvl-${level} ${typeClass}" ${animationStyle} />\n`;
       }
     }
   }
@@ -431,11 +436,9 @@ export function generateSVG(
         .legend-item { cursor: pointer; }
         
         /* When any legend item is hovered, dim the whole grid */
-        .legend-item:hover ~ .grid-container .lvl-0,
-        .legend-item:hover ~ .grid-container .lvl-1,
-        .legend-item:hover ~ .grid-container .lvl-2,
-        .legend-item:hover ~ .grid-container .lvl-3,
-        .legend-item:hover ~ .grid-container .lvl-4 {
+        .legend-item:hover ~ .grid-container rect,
+        .legend-item:hover ~ .grid-container path,
+        .legend-item:hover ~ .grid-container circle {
           opacity: 0.15;
           filter: grayscale(0.8);
         }
@@ -445,58 +448,67 @@ export function generateSVG(
         .l1:hover ~ .grid-container .lvl-1,
         .l2:hover ~ .grid-container .lvl-2,
         .l3:hover ~ .grid-container .lvl-3,
-        .l4:hover ~ .grid-container .lvl-4 {
+        .l4:hover ~ .grid-container .lvl-4,
+        .l-gh:hover ~ .grid-container .type-gh,
+        .l-gl:hover ~ .grid-container .type-gl,
+        .l-mg:hover ~ .grid-container .type-mg {
           opacity: 1 !important;
-          filter: none !important;
-          transform: scale(1.15);
+          filter: brightness(1.2) !important;
+        }
+        
+        /* Dim labels when legend is hovered */
+        .legend-item:hover ~ .labels-container {
+          opacity: 0.3;
         }
       </style>
       ${neonFilter}
       <rect width="100%" height="100%" fill="${colors.bg}" rx="8" />
       ${title ? `<text x="${width / 2}" y="35" font-size="18" font-weight="900" fill="${colors.text}" text-anchor="middle">${escapeHtml(title)}</text>` : ""}
       
-      <!-- Legend (Moved before grid for CSS sibling selector) -->
-      <g transform="translate(${isVertical ? (width - 150) / 2 : leftPadding}, ${height - footerHeight + 25})">
-        ${isVertical ? `
-          <g>
-            <rect x="0" y="0" width="8" height="8" fill="${colors.github[3]}" rx="0" />
-            <text x="12" y="8" font-size="8" fill="${colors.text}" font-weight="bold">Github</text>
-            <rect x="50" y="0" width="8" height="8" fill="${colors.gitlab[3]}" rx="0" />
-            <text x="62" y="8" font-size="8" fill="${colors.text}" font-weight="bold">GitLab</text>
-            <rect x="104" y="0" width="8" height="8" fill="${colors.merged[3]}" rx="0" />
-            <text x="116" y="8" font-size="8" fill="${colors.text}" font-weight="bold">Merged</text>
-          </g>
-          <g transform="translate(0, 22)">
-            <text x="0" y="8" font-size="8" fill="${colors.text}" opacity="0.5">Less</text>
-            <rect x="25" y="0" width="8" height="8" fill="${colors.empty}" rx="0" class="legend-item l0" />
-            <rect x="35" y="0" width="8" height="8" fill="${colors.github[0]}" rx="0" class="legend-item l1" />
-            <rect x="45" y="0" width="8" height="8" fill="${colors.github[1]}" rx="0" class="legend-item l2" />
-            <rect x="55" y="0" width="8" height="8" fill="${colors.github[2]}" rx="0" class="legend-item l3" />
-            <rect x="65" y="0" width="8" height="8" fill="${colors.github[3]}" rx="0" class="legend-item l4" />
-            <text x="80" y="8" font-size="8" fill="${colors.text}" opacity="0.5">More</text>
-          </g>
-        ` : `
-          <rect x="0" y="1" width="10" height="10" fill="${colors.github[3]}" rx="0" />
-          <text x="14" y="10" font-size="9" fill="${colors.text}" font-weight="bold">GitHub</text>
-          <rect x="60" y="1" width="10" height="10" fill="${colors.gitlab[3]}" rx="0" />
-          <text x="74" y="10" font-size="9" fill="${colors.text}" font-weight="bold">GitLab</text>
-          <rect x="118" y="1" width="10" height="10" fill="${colors.merged[3]}" rx="0" />
-          <text x="132" y="10" font-size="9" fill="${colors.text}" font-weight="bold">Merged</text>
-          
-          <g transform="translate(${gridWidth - 115}, 0)">
-            <text x="0" y="10" font-size="8" fill="${colors.text}" opacity="0.5">Less</text>
-            <rect x="26" y="1" width="10" height="10" fill="${colors.empty}" rx="0" class="legend-item l0" />
-            <rect x="38" y="1" width="10" height="10" fill="${colors.github[0]}" rx="0" class="legend-item l1" />
-            <rect x="50" y="1" width="10" height="10" fill="${colors.github[1]}" rx="0" class="legend-item l2" />
-            <rect x="62" y="1" width="10" height="10" fill="${colors.github[2]}" rx="0" class="legend-item l3" />
-            <rect x="74" y="1" width="10" height="10" fill="${colors.github[3]}" rx="0" class="legend-item l4" />
-            <text x="90" y="10" font-size="8" fill="${colors.text}" opacity="0.5">More</text>
-          </g>
-        `}
-      </g>
+      <!-- Legend (Direct Siblings) -->
+      ${(() => {
+        const lx = isVertical ? (width - 150) / 2 : offsetX;
+        const ly = isVertical ? height - 80 : height - footerHeight + 25;
+        const s = isVertical ? 8 : 10;
+        if (isVertical) {
+          return `
+            <rect x="${lx}" y="${ly}" width="${s}" height="${s}" fill="${colors.github[3]}" rx="0" class="legend-item l-gh" />
+            <text x="${lx + 12}" y="${ly + 8}" font-size="8" fill="${colors.text}" font-weight="bold" class="legend-item l-gh">GitHub</text>
+            <rect x="${lx + 50}" y="${ly}" width="${s}" height="${s}" fill="${colors.gitlab[3]}" rx="0" class="legend-item l-gl" />
+            <text x="${lx + 62}" y="${ly + 8}" font-size="8" fill="${colors.text}" font-weight="bold" class="legend-item l-gl">GitLab</text>
+            <rect x="${lx + 104}" y="${ly}" width="${s}" height="${s}" fill="${colors.merged[3]}" rx="0" class="legend-item l-mg" />
+            <text x="${lx + 116}" y="${ly + 8}" font-size="8" fill="${colors.text}" font-weight="bold" class="legend-item l-mg">Merged</text>
+            
+            <text x="${lx}" y="${ly + 22}" font-size="8" fill="${colors.text}" opacity="0.5">Less</text>
+            <rect x="${lx + 25}" y="${ly + 14}" width="${s}" height="${s}" fill="${colors.empty}" rx="0" class="legend-item l0" />
+            <rect x="${lx + 35}" y="${ly + 14}" width="${s}" height="${s}" fill="${colors.github[0]}" rx="0" class="legend-item l1" />
+            <rect x="${lx + 45}" y="${ly + 14}" width="${s}" height="${s}" fill="${colors.github[1]}" rx="0" class="legend-item l2" />
+            <rect x="${lx + 55}" y="${ly + 14}" width="${s}" height="${s}" fill="${colors.github[2]}" rx="0" class="legend-item l3" />
+            <rect x="${lx + 65}" y="${ly + 14}" width="${s}" height="${s}" fill="${colors.github[3]}" rx="0" class="legend-item l4" />
+            <text x="${lx + 80}" y="${ly + 22}" font-size="8" fill="${colors.text}" opacity="0.5">More</text>
+          `;
+        } else {
+          return `
+            <rect x="${lx}" y="${ly}" width="${s}" height="${s}" fill="${colors.github[3]}" rx="0" class="legend-item l-gh" />
+            <text x="${lx + 14}" y="${ly + 9}" font-size="9" fill="${colors.text}" font-weight="bold" class="legend-item l-gh">GitHub</text>
+            <rect x="${lx + 60}" y="${ly}" width="${s}" height="${s}" fill="${colors.gitlab[3]}" rx="0" class="legend-item l-gl" />
+            <text x="${lx + 74}" y="${ly + 9}" font-size="9" fill="${colors.text}" font-weight="bold" class="legend-item l-gl">GitLab</text>
+            <rect x="${lx + 118}" y="${ly}" width="${s}" height="${s}" fill="${colors.merged[3]}" rx="0" class="legend-item l-mg" />
+            <text x="${lx + 132}" y="${ly + 9}" font-size="9" fill="${colors.text}" font-weight="bold" class="legend-item l-mg">Merged</text>
+            
+            <text x="${lx + gridWidth - 115}" y="${ly + 9}" font-size="8" fill="${colors.text}" opacity="0.5">Less</text>
+            <rect x="${lx + gridWidth - 89}" y="${ly}" width="${s}" height="${s}" fill="${colors.empty}" rx="0" class="legend-item l0" />
+            <rect x="${lx + gridWidth - 77}" y="${ly}" width="${s}" height="${s}" fill="${colors.github[0]}" rx="0" class="legend-item l1" />
+            <rect x="${lx + gridWidth - 65}" y="${ly}" width="${s}" height="${s}" fill="${colors.github[1]}" rx="0" class="legend-item l2" />
+            <rect x="${lx + gridWidth - 53}" y="${ly}" width="${s}" height="${s}" fill="${colors.github[2]}" rx="0" class="legend-item l3" />
+            <rect x="${lx + gridWidth - 41}" y="${ly}" width="${s}" height="${s}" fill="${colors.github[3]}" rx="0" class="legend-item l4" />
+            <text x="${lx + gridWidth - 25}" y="${ly + 9}" font-size="8" fill="${colors.text}" opacity="0.5">More</text>
+          `;
+        }
+      })()}
       
       <g class="grid-container" ${theme === "neon" ? 'filter="url(#neon-glow)"' : ""}>${gridItems}</g>
-      ${labels}
+      <g class="labels-container">${labels}</g>
       ${!isPro ? `<text x="${width / 2}" y="${height - 10}" font-size="8" fill="${colors.text}" opacity="0.3" text-anchor="middle">Powered by GitComBridge</text>` : ""}
     </svg>
   `;

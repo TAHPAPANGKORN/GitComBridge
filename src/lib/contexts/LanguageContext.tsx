@@ -85,6 +85,8 @@ const translations = {
     vert_sidebar: "Vertical (Sidebar)",
     ready_to_sync: "Ready to sync?",
     get_my_graph: "Get My Graph Now",
+    interactive_enabled: "Interactive Enabled",
+    hover_hint: "Try hovering over the legend colors!",
   },
   TH: {
     hero_title: "รวมทุกการมีส่วนร่วมในกราฟเดียว",
@@ -160,6 +162,8 @@ const translations = {
     vert_sidebar: "แนวตั้ง (แถบข้าง)",
     ready_to_sync: "พร้อมรวมข้อมูลหรือยัง?",
     get_my_graph: "สร้างกราฟของฉันตอนนี้",
+    interactive_enabled: "รองรับ Interactive",
+    hover_hint: "ลองวางเมาส์ทับแถบสีด้านล่างดูสิ!",
   }
 };
 
