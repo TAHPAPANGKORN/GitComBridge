@@ -65,13 +65,14 @@ export default function Home() {
   const [cellSize, setCellSize] = useState<string>("L");
   const [layout, setLayout] = useState<string>("horizontal");
   const [customTitle, setCustomTitle] = useState("");
+  const [animation, setAnimation] = useState<string>("none");
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastModified, setLastModified] = useState(Date.now());
 
   // Track changes to refresh preview
   useEffect(() => {
     setLastModified(Date.now());
-  }, [weeks, cellSize, layout, customTitle, previewTheme]);
+  }, [weeks, cellSize, layout, customTitle, previewTheme, animation]);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -114,6 +115,7 @@ export default function Home() {
     if (cellSize !== "M") url += `&cellSize=${cellSize}`;
     if (layout !== "horizontal") url += `&layout=${layout}`;
     if (customTitle) url += `&title=${encodeURIComponent(customTitle)}`;
+    if (animation !== "none") url += `&animation=${animation}`;
     
     return `${url}&t=${lastModified}`;
   };
@@ -488,6 +490,24 @@ export default function Home() {
                               ))}
                             </div>
                           </div>
+                          <div className="space-y-1.5">
+                            <div className="flex items-center justify-between">
+                              <p className={`text-[9px] font-bold uppercase opacity-40`}>Animation</p>
+                              {accountStatus.tier !== 'pro' && <Lock className="w-2.5 h-2.5 text-yellow-500/50" />}
+                            </div>
+                            <select 
+                              value={animation}
+                              disabled={accountStatus.tier !== 'pro'}
+                              onChange={(e) => accountStatus.tier === 'pro' ? setAnimation(e.target.value) : setShowUpgradeModal(true)}
+                              className={`w-full border rounded-lg px-3 py-2 text-xs outline-none cursor-pointer transition-all bg-black/5 dark:bg-white/5 border-black/5 dark:border-white/10 text-current ${accountStatus.tier !== 'pro' ? 'cursor-not-allowed opacity-50' : ''}`}
+                            >
+                              <option value="none">None</option>
+                              <option value="pulse">Pulse</option>
+                              <option value="fade">Fade</option>
+                              <option value="wave">Wave</option>
+                              <option value="glimmer">Glimmer</option>
+                            </select>
+                          </div>
                           <div className="space-y-1.5 col-span-2">
                             {/* Output Mode removed as requested */}
                           </div>
@@ -524,11 +544,11 @@ export default function Home() {
                             </label>
                             <div className="relative group flex-1 min-h-0">
                               <pre 
-                                className={`p-4 pr-12 rounded-xl font-mono text-[10px] border h-full transition-colors bg-black/5 dark:bg-black/40 text-purple-600 dark:text-gitlab-purple border-black/5 dark:border-white/10 break-all whitespace-pre-wrap overflow-y-auto`}
+                                className={`p-4 pr-12 rounded-xl font-mono text-[10px] border h-full flex items-center transition-colors bg-black/5 dark:bg-black/40 text-purple-600 dark:text-gitlab-purple border-black/5 dark:border-white/10 break-all whitespace-pre-wrap overflow-y-auto`}
                                 style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                               >
                                 <style dangerouslySetInnerHTML={{__html: `pre::-webkit-scrollbar { display: none; }`}} />
-                                <code>{getFormattedCode()}</code>
+                                <code className="w-full">{getFormattedCode()}</code>
                               </pre>
                               <button 
                                 onClick={handleCopy}

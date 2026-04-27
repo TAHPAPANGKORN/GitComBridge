@@ -5,6 +5,7 @@ import { format, subDays, startOfWeek, eachDayOfInterval } from "date-fns";
 export type ThemeName = "dark" | "light" | "ocean" | "sunset" | "neon" | "monokai" | "sakura" | "matcha" | "snow" | "daydream" | "latte" | "ruby";
 export type CellSize = "S" | "M" | "L" | "XL";
 export type GraphLayout = "horizontal" | "vertical";
+export type AnimationType = "none" | "pulse" | "fade" | "wave" | "glimmer";
 
 interface ThemeColors {
   bg: string;
@@ -114,6 +115,7 @@ export interface SVGOptions {
   title?: string;
   hideWatermark?: boolean;
   timezone?: string;
+  animation?: AnimationType;
 }
 
 function escapeHtml(unsafe: string) {
@@ -139,6 +141,7 @@ export function generateSVG(
     title: optTitle = "",
     hideWatermark: optHideWatermark = false,
     timezone = "Asia/Bangkok",
+    animation: optAnimation = "none",
   } = options;
 
   const isPro = userTier === "pro";
@@ -150,6 +153,7 @@ export function generateSVG(
   const layout   = isPro ? (optLayout || "horizontal") : "horizontal";
   const title    = isPro ? (optTitle || "") : "";
   const hideWatermark = isPro && optHideWatermark;
+  const animation = isPro ? (optAnimation || "none") : "none";
 
   const colors = THEMES[theme] || THEMES.light;
   const gap = Math.max(2, Math.round(cellSizeVal * 0.2));
@@ -210,7 +214,26 @@ export function generateSVG(
     const y = isVertical ? topPadding + weekIndex * (cellSizeVal + gap) : topPadding + dayInWeek * (cellSizeVal + gap);
     
     const color = getCellColor(dateStr);
-    gridItems += `<rect x="${x}" y="${y}" width="${cellSizeVal}" height="${cellSizeVal}" fill="${color}" rx="${Math.max(1, cellSizeVal * 0.12)}" />\n`;
+    const count = contributions[dateStr] || 0;
+    
+    let animationStyle = "";
+    if (animation !== "none" && count > 0) {
+      if (animation === "pulse") {
+        const delay = (Math.random() * 2).toFixed(2);
+        animationStyle = `style="animation: pulse 2s infinite ease-in-out ${delay}s"`;
+      } else if (animation === "fade") {
+        const delay = (i * 0.01).toFixed(2);
+        animationStyle = `style="animation: fade 8s infinite ease-in-out ${delay}s; opacity: 0;"`;
+      } else if (animation === "wave") {
+        const delay = (weekIndex * 0.1).toFixed(2);
+        animationStyle = `style="animation: wave 2s infinite ease-in-out ${delay}s"`;
+      } else if (animation === "glimmer") {
+        const delay = (Math.random() * 5).toFixed(2);
+        animationStyle = `style="animation: glimmer 3s infinite ease-in-out ${delay}s"`;
+      }
+    }
+
+    gridItems += `<rect x="${x}" y="${y}" width="${cellSizeVal}" height="${cellSizeVal}" fill="${color}" rx="${Math.max(1, cellSizeVal * 0.12)}" ${animationStyle} />\n`;
 
     if (dayInWeek === 6) weekIndex++;
   }
@@ -261,7 +284,28 @@ export function generateSVG(
 
   return `
     <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">
-      <style>@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&amp;display=swap'); text { font-family: 'Inter', sans-serif; }</style>
+      <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&amp;display=swap');
+        text { font-family: 'Inter', sans-serif; }
+        @keyframes pulse {
+          0% { opacity: 1; }
+          50% { opacity: 0.6; }
+          100% { opacity: 1; }
+        }
+        @keyframes fade {
+          0%, 40%, 100% { opacity: 0; transform: scale(0.9); }
+          10%, 30% { opacity: 1; transform: scale(1); }
+        }
+        @keyframes wave {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.4; }
+        }
+        @keyframes glimmer {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.8; filter: brightness(1.8); }
+        }
+        rect { transform-box: fill-box; transform-origin: center; }
+      </style>
       ${neonFilter}
       <rect width="100%" height="100%" fill="${colors.bg}" rx="8" />
       ${title ? `<text x="20" y="35" font-size="18" font-weight="900" fill="${colors.text}">${escapeHtml(title)}</text>` : ""}

@@ -3,7 +3,7 @@ import { prisma } from "@/lib/db";
 import { GitHubService } from "@/lib/services/github.service";
 import { GitLabService } from "@/lib/services/gitlab.service";
 import { refreshAccountToken } from "@/lib/utils/token-refresher";
-import { generateSVG, ThemeName, CellSize, GraphLayout } from "@/lib/utils/svg-generator";
+import { generateSVG, ThemeName, CellSize, GraphLayout, AnimationType } from "@/lib/utils/svg-generator";
 import { hasThemeAccess, THEME_TIER } from "@/lib/stripe";
 
 const VALID_THEMES = Object.keys(THEME_TIER) as ThemeName[];
@@ -31,6 +31,7 @@ export async function GET(
   const requestedLayout  = (searchParams.get("layout") as GraphLayout) || "horizontal";
   const requestedHideWm  = searchParams.get("hideWatermark") === "true";
   const requestedTitle   = searchParams.get("title") || undefined;
+  const requestedAnim    = (searchParams.get("animation") as AnimationType) || "none";
 
   // --- SPECIAL CASE: DEMO DATA ---
   // Demo is always "free" — cannot be used to preview Pro features
@@ -55,7 +56,8 @@ export async function GET(
       layout: FREE_LAYOUT,
       weeks: FREE_WEEKS,
       cellSize: FREE_CELL_SIZE,
-    }, "free");
+      animation: requestedAnim,
+    }, "pro");
     return new NextResponse(svg, {
       headers: {
         "Content-Type": "image/svg+xml",
@@ -129,7 +131,7 @@ export async function GET(
     const svg = generateSVG(
       githubData,
       gitlabData,
-      { theme: resolvedTheme, weeks, cellSize, layout, title, hideWatermark, timezone },
+      { theme: resolvedTheme, weeks, cellSize, layout, title, hideWatermark, timezone, animation: requestedAnim },
       userTier
     );
 
