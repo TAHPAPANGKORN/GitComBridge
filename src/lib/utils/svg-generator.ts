@@ -453,8 +453,12 @@ export function generateSVG(
         .l-gl:hover ~ .grid-container .type-gl,
         .l-mg:hover ~ .grid-container .type-mg {
           opacity: 1 !important;
-          filter: none !important;
-          transform: scale(1.15);
+          filter: brightness(1.2) !important;
+        }
+        
+        /* Dim labels when legend is hovered */
+        .legend-item:hover ~ .labels-container {
+          opacity: 0.3;
         }
       </style>
       ${neonFilter}
@@ -464,7 +468,7 @@ export function generateSVG(
       <!-- Legend (Direct Siblings) -->
       ${(() => {
         const lx = isVertical ? (width - 150) / 2 : offsetX;
-        const ly = height - footerHeight + 25;
+        const ly = isVertical ? height - 80 : height - footerHeight + 25;
         const s = isVertical ? 8 : 10;
         if (isVertical) {
           return `
@@ -504,7 +508,7 @@ export function generateSVG(
       })()}
       
       <g class="grid-container" ${theme === "neon" ? 'filter="url(#neon-glow)"' : ""}>${gridItems}</g>
-      ${labels}
+      <g class="labels-container">${labels}</g>
       ${!isPro ? `<text x="${width / 2}" y="${height - 10}" font-size="8" fill="${colors.text}" opacity="0.3" text-anchor="middle">Powered by GitComBridge</text>` : ""}
     </svg>
   `;
