@@ -178,24 +178,35 @@ export function generateSVG(
   const leftPadding = isVertical ? 75 : 40; // More space for months in vertical
   const rightPadding = 40;
   const topPadding = title ? 60 : 40;
-  const footerHeight = isVertical ? 65 : 40; // Taller footer for vertical
-  const watermarkHeight = (!hideWatermark && !isPro) ? 15 : 0;
+  const footerHeight = isVertical ? 100 : 45; // Taller footer for vertical to avoid overlap
+  const watermarkHeight = (!hideWatermark && !isPro) ? 20 : 0;
+
+  // 🌐 Get current date in requested timezone
+  const now = new Date(new Date().toLocaleString("en-US", { timeZone: timezone }));
+  now.setHours(0, 0, 0, 0);
+
+  const startDate = subDays(now, (weeks * 7) - 1);
+  const calendarStart = startOfWeek(startDate); // Defaults to Sunday
+  const daysInterval = eachDayOfInterval({ start: calendarStart, end: now });
+
+  // Use actual week count from interval for accurate dimensions
+  const actualWeeks = Math.ceil(daysInterval.length / 7);
 
   // --- DIMENSIONS & SPACING ---
   const isIsometric = viewMode === "isometric";
   const isoGap = gap * 0.5;
+
+  // Calculate dynamic dimensions based on layout
+  const gridWidth = isVertical ? (7 * (cellSizeVal + gap)) - gap : (actualWeeks * (cellSizeVal + gap)) - gap;
+  const gridHeight = isVertical ? (actualWeeks * (cellSizeVal + gap)) - gap : (7 * (cellSizeVal + gap)) - gap;
   
-  // Calculate dynamic dimensions
-  const mainWidth = (weeks * (cellSizeVal + gap)) - gap;
-  const standardHeight = (cellSizeVal + gap) * 7;
-  
-  let width = mainWidth + leftPadding + rightPadding;
-  let height = standardHeight + topPadding + footerHeight + watermarkHeight;
+  let width = gridWidth + leftPadding + rightPadding;
+  let height = gridHeight + topPadding + footerHeight + watermarkHeight;
 
   // Increase canvas for Isometric view to prevent clipping
   if (isIsometric) {
-    width = Math.max(width, (weeks + 7) * (cellSizeVal * 0.9 + isoGap) + 100);
-    height = Math.max(height, (weeks + 7) * (cellSizeVal * 0.5 + isoGap / 2) + topPadding + footerHeight + 100);
+    width = Math.max(width, (actualWeeks + 7) * (cellSizeVal * 0.9 + isoGap) + 100);
+    height = Math.max(height, (actualWeeks + 7) * (cellSizeVal * 0.5 + isoGap / 2) + topPadding + footerHeight + 100);
   }
 
   const contributions = mergeContributions(githubData, gitlabData);
@@ -222,14 +233,6 @@ export function generateSVG(
     return colors.github[idx];
   };
 
-  // 🌐 Get current date in requested timezone
-  const now = new Date(new Date().toLocaleString("en-US", { timeZone: timezone }));
-  now.setHours(0, 0, 0, 0);
-
-  const startDate = subDays(now, (weeks * 7) - 1);
-  const calendarStart = startOfWeek(startDate); // Defaults to Sunday
-  const daysInterval = eachDayOfInterval({ start: calendarStart, end: now });
-
   // --- GRID RENDERING ---
 
   // Prepare all days first to allow sorting for Isometric Z-order
@@ -248,6 +251,9 @@ export function generateSVG(
   if (isIsometric) {
     gridData.sort((a, b) => (a.weekIdx + a.dayInWeek) - (b.weekIdx + b.dayInWeek));
   }
+
+  const offsetX = (width - gridWidth) / 2;
+  const offsetY = topPadding;
 
   let gridItems = "";
   for (const item of gridData) {
@@ -295,8 +301,8 @@ export function generateSVG(
       gridItems += `<path d="M${isoX} ${isoY - h} L${isoX + cellSizeVal * 0.9} ${isoY - h - cellSizeVal * 0.45} L${isoX} ${isoY - h - cellSizeVal * 0.9} L${isoX - cellSizeVal * 0.9} ${isoY - h - cellSizeVal * 0.45} Z" fill="${topColor}" stroke="${strokeColor}" stroke-width="0.1" class="lvl-${level}" ${animationStyle} />\n`;
     } else {
       // 🟦 Standard Flat View
-      const x = isVertical ? leftPadding + dayInWeek * (cellSizeVal + gap) : leftPadding + weekIdx * (cellSizeVal + gap);
-      const y = isVertical ? topPadding + weekIdx * (cellSizeVal + gap) : topPadding + dayInWeek * (cellSizeVal + gap);
+      const x = isVertical ? offsetX + dayInWeek * (cellSizeVal + gap) : offsetX + weekIdx * (cellSizeVal + gap);
+      const y = isVertical ? offsetY + weekIdx * (cellSizeVal + gap) : offsetY + dayInWeek * (cellSizeVal + gap);
 
       if (shape === "circle") {
         gridItems += `<circle cx="${x + cellSizeVal/2}" cy="${y + cellSizeVal/2}" r="${cellSizeVal/2}" fill="${color}" class="lvl-${level}" ${animationStyle} />\n`;
@@ -318,8 +324,8 @@ export function generateSVG(
   if (isVertical) {
     // Days Header (Narrow)
     days.forEach((day, i) => {
-      const x = leftPadding + (i * 2 + 1) * (cellSizeVal + gap);
-      labels += `<text x="${x + cellSizeVal / 2}" y="${topPadding - 8}" font-size="8" fill="${colors.text}" text-anchor="middle" font-weight="bold">${day}</text>\n`;
+      const x = offsetX + (i * 2 + 1) * (cellSizeVal + gap);
+      labels += `<text x="${x + cellSizeVal / 2}" y="${offsetY - 8}" font-size="8" fill="${colors.text}" text-anchor="middle" font-weight="bold">${day}</text>\n`;
     });
 
     // Vertical Month Labels
@@ -329,8 +335,8 @@ export function generateSVG(
       currentDate.setDate(startDate.getDate() + (w * 7));
       const month = currentDate.getMonth();
       if (month !== lastMonth) {
-        const y = topPadding + w * (cellSizeVal + gap) + (cellSizeVal * 0.7);
-        labels += `<text x="${leftPadding - 15}" y="${y}" font-size="9" fill="${colors.text}" text-anchor="end" font-weight="bold">${months[month]}</text>\n`;
+        const y = offsetY + w * (cellSizeVal + gap) + (cellSizeVal * 0.7);
+        labels += `<text x="${offsetX - 15}" y="${y}" font-size="9" fill="${colors.text}" text-anchor="end" font-weight="bold">${months[month]}</text>\n`;
         lastMonth = month;
       }
     }
@@ -378,8 +384,8 @@ export function generateSVG(
       });
     } else {
       days.forEach((day, i) => {
-        const y = topPadding + (i * 2 + 1) * (cellSizeVal + gap) + (cellSizeVal * 0.7);
-        labels += `<text x="${leftPadding - 10}" y="${y}" font-size="9" fill="${colors.text}" text-anchor="end" font-weight="bold">${day}</text>\n`;
+        const y = offsetY + (i * 2 + 1) * (cellSizeVal + gap) + (cellSizeVal * 0.7);
+        labels += `<text x="${offsetX - 10}" y="${y}" font-size="9" fill="${colors.text}" text-anchor="end" font-weight="bold">${day}</text>\n`;
       });
 
       for (let w = 0; w < weeks; w++) {
@@ -387,8 +393,8 @@ export function generateSVG(
         currentDate.setDate(startDate.getDate() + (w * 7));
         const month = currentDate.getMonth();
         if (month !== lastMonth) {
-          const x = leftPadding + w * (cellSizeVal + gap);
-          labels += `<text x="${x}" y="${topPadding - 10}" font-size="9" fill="${colors.text}" font-weight="bold">${months[month]}</text>\n`;
+          const x = offsetX + w * (cellSizeVal + gap);
+          labels += `<text x="${x}" y="${offsetY - 8}" font-size="9" fill="${colors.text}" font-weight="bold">${months[month]}</text>\n`;
           lastMonth = month;
         }
       }
@@ -447,10 +453,10 @@ export function generateSVG(
       </style>
       ${neonFilter}
       <rect width="100%" height="100%" fill="${colors.bg}" rx="8" />
-      ${title ? `<text x="20" y="35" font-size="18" font-weight="900" fill="${colors.text}">${escapeHtml(title)}</text>` : ""}
+      ${title ? `<text x="${width / 2}" y="35" font-size="18" font-weight="900" fill="${colors.text}" text-anchor="middle">${escapeHtml(title)}</text>` : ""}
       
       <!-- Legend (Moved before grid for CSS sibling selector) -->
-      <g transform="translate(${leftPadding}, ${height - footerHeight - watermarkHeight + 15})">
+      <g transform="translate(${isVertical ? (width - 150) / 2 : leftPadding}, ${height - footerHeight + 25})">
         ${isVertical ? `
           <g>
             <rect x="0" y="0" width="8" height="8" fill="${colors.github[3]}" rx="0" />
@@ -477,7 +483,7 @@ export function generateSVG(
           <rect x="118" y="1" width="10" height="10" fill="${colors.merged[3]}" rx="0" />
           <text x="132" y="10" font-size="9" fill="${colors.text}" font-weight="bold">Merged</text>
           
-          <g transform="translate(${mainWidth - 115}, 0)">
+          <g transform="translate(${gridWidth - 115}, 0)">
             <text x="0" y="10" font-size="8" fill="${colors.text}" opacity="0.5">Less</text>
             <rect x="26" y="1" width="10" height="10" fill="${colors.empty}" rx="0" class="legend-item l0" />
             <rect x="38" y="1" width="10" height="10" fill="${colors.github[0]}" rx="0" class="legend-item l1" />
