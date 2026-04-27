@@ -1,4 +1,5 @@
 import { graphql } from "@octokit/graphql";
+import { subYears } from "date-fns";
 import { ContributionData } from "@/lib/types/index";
 
 export class GitHubService {
@@ -19,8 +20,8 @@ export class GitHubService {
 
     const contributions: ContributionData = {};
     const now = new Date();
-    const oneYearAgo = new Date();
-    oneYearAgo.setFullYear(now.getFullYear() - 1);
+    const oneYearAgo = subYears(now, 1);
+    const twoYearsAgo = subYears(now, 2);
 
     // Function to fetch a specific year range
     const fetchRange = async (from: Date, to: Date) => {
@@ -41,32 +42,37 @@ export class GitHubService {
         }
       `;
 
-      const response: any = await graphql(query, {
-        from: from.toISOString(),
-        to: to.toISOString(),
-        headers: {
-          authorization: `token ${this.token}`,
-        },
-      });
+      try {
+        const response: any = await graphql(query, {
+          from: from.toISOString(),
+          to: to.toISOString(),
+          headers: {
+            authorization: `token ${this.token}`,
+          },
+        });
 
-      const weeks = response.viewer.contributionsCollection.contributionCalendar.weeks;
-      for (const week of weeks) {
-        for (const day of week.contributionDays) {
-          contributions[day.date] = day.contributionCount;
+        const weeks = response.viewer.contributionsCollection.contributionCalendar.weeks;
+        for (const week of weeks) {
+          for (const day of week.contributionDays) {
+            contributions[day.date] = day.contributionCount;
+          }
         }
+      } catch (err) {
+        console.error(`Error fetching GitHub range ${from.toISOString()} - ${to.toISOString()}:`, err);
+        // Don't throw, just let other ranges continue
       }
     };
 
     try {
-      // Fetch current year and previous year in parallel
+      // Fetch ranges in parallel - GitHub range cannot exceed 1 year
       await Promise.all([
         fetchRange(oneYearAgo, now),
-        fetchRange(new Date(oneYearAgo.getTime() - 365 * 24 * 60 * 60 * 1000), oneYearAgo)
+        fetchRange(twoYearsAgo, oneYearAgo)
       ]);
 
       return contributions;
     } catch (error) {
-      console.error("Error fetching GitHub contributions:", error);
+      console.error("Critical error in GitHub fetchContributions:", error);
       return {};
     }
   }
