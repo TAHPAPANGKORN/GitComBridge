@@ -6,6 +6,8 @@ export type ThemeName = "dark" | "light" | "ocean" | "sunset" | "neon" | "monoka
 export type CellSize = "S" | "M" | "L" | "XL";
 export type GraphLayout = "horizontal" | "vertical";
 export type AnimationType = "none" | "pulse" | "fade" | "wave" | "glimmer";
+export type ViewMode = "flat" | "isometric";
+export type ShapeType = "square" | "circle" | "diamond" | "leaf";
 
 interface ThemeColors {
   bg: string;
@@ -116,6 +118,16 @@ export interface SVGOptions {
   hideWatermark?: boolean;
   timezone?: string;
   animation?: AnimationType;
+  viewMode?: ViewMode;
+  shape?: ShapeType;
+}
+
+function darkenColor(hex: string, amount: number): string {
+  hex = hex.replace("#", "");
+  const r = Math.max(0, parseInt(hex.substring(0, 2), 16) - amount);
+  const g = Math.max(0, parseInt(hex.substring(2, 4), 16) - amount);
+  const b = Math.max(0, parseInt(hex.substring(4, 6), 16) - amount);
+  return `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${b.toString(16).padStart(2, "0")}`;
 }
 
 function escapeHtml(unsafe: string) {
@@ -142,6 +154,8 @@ export function generateSVG(
     hideWatermark: optHideWatermark = false,
     timezone = "Asia/Bangkok",
     animation: optAnimation = "none",
+    viewMode: optViewMode = "flat",
+    shape: optShape = "square",
   } = options;
 
   const isPro = userTier === "pro";
@@ -154,21 +168,35 @@ export function generateSVG(
   const title    = isPro ? (optTitle || "") : "";
   const hideWatermark = isPro && optHideWatermark;
   const animation = isPro ? (optAnimation || "none") : "none";
+  const viewMode = isPro ? (optViewMode || "flat") : "flat";
+  const shape = isPro ? (optShape || "square") : "square";
 
   const colors = THEMES[theme] || THEMES.light;
   const gap = Math.max(2, Math.round(cellSizeVal * 0.2));
 
   const isVertical = layout === "vertical";
   const leftPadding = isVertical ? 75 : 40; // More space for months in vertical
+  const rightPadding = 40;
   const topPadding = title ? 60 : 40;
   const footerHeight = isVertical ? 65 : 40; // Taller footer for vertical
   const watermarkHeight = (!hideWatermark && !isPro) ? 15 : 0;
 
-  const mainWidth = isVertical ? (7 * (cellSizeVal + gap) + 10) : (weeks * (cellSizeVal + gap) + 10);
-  const mainHeight = isVertical ? (weeks * (cellSizeVal + gap) + 10) : (7 * (cellSizeVal + gap) + 10);
+  // --- DIMENSIONS & SPACING ---
+  const isIsometric = viewMode === "isometric";
+  const isoGap = gap * 0.5;
+  
+  // Calculate dynamic dimensions
+  const mainWidth = (weeks * (cellSizeVal + gap)) - gap;
+  const standardHeight = (cellSizeVal + gap) * 7;
+  
+  let width = mainWidth + leftPadding + rightPadding;
+  let height = standardHeight + topPadding + footerHeight + watermarkHeight;
 
-  const width = mainWidth + leftPadding + 40;
-  const height = mainHeight + topPadding + footerHeight + watermarkHeight;
+  // Increase canvas for Isometric view to prevent clipping
+  if (isIsometric) {
+    width = Math.max(width, (weeks + 7) * (cellSizeVal * 0.9 + isoGap) + 100);
+    height = Math.max(height, (weeks + 7) * (cellSizeVal * 0.5 + isoGap / 2) + topPadding + footerHeight + 100);
+  }
 
   const contributions = mergeContributions(githubData, gitlabData);
   const counts = Object.values(contributions).filter(c => c > 0);
@@ -202,40 +230,85 @@ export function generateSVG(
   const calendarStart = startOfWeek(startDate); // Defaults to Sunday
   const daysInterval = eachDayOfInterval({ start: calendarStart, end: now });
 
-  let gridItems = "";
-  let weekIndex = 0;
+  // --- GRID RENDERING ---
 
-  for (let i = 0; i < daysInterval.length; i++) {
-    const day = daysInterval[i];
+  // Prepare all days first to allow sorting for Isometric Z-order
+  const gridData = daysInterval.map((day, i) => {
     const dateStr = format(day, "yyyy-MM-dd");
     const dayInWeek = i % 7;
-
-    const x = isVertical ? leftPadding + dayInWeek * (cellSizeVal + gap) : leftPadding + weekIndex * (cellSizeVal + gap);
-    const y = isVertical ? topPadding + weekIndex * (cellSizeVal + gap) : topPadding + dayInWeek * (cellSizeVal + gap);
-    
-    const color = getCellColor(dateStr);
+    const weekIdx = Math.floor(i / 7);
     const count = contributions[dateStr] || 0;
+    const level = getLevel(count);
+    const color = getCellColor(dateStr);
+    
+    return { day, dateStr, dayInWeek, weekIdx, count, level, color, i };
+  });
+
+  // Sort for Isometric: Back-to-Front (Smaller week + day first)
+  if (isIsometric) {
+    gridData.sort((a, b) => (a.weekIdx + a.dayInWeek) - (b.weekIdx + b.dayInWeek));
+  }
+
+  let gridItems = "";
+  for (const item of gridData) {
+    const { dayInWeek, weekIdx, color, count, level, i } = item;
+
     
     let animationStyle = "";
     if (animation !== "none" && count > 0) {
-      if (animation === "pulse") {
-        const delay = (Math.random() * 2).toFixed(2);
-        animationStyle = `style="animation: pulse 2s infinite ease-in-out ${delay}s"`;
-      } else if (animation === "fade") {
-        const delay = (i * 0.01).toFixed(2);
-        animationStyle = `style="animation: fade 8s infinite ease-in-out ${delay}s; opacity: 0;"`;
-      } else if (animation === "wave") {
-        const delay = (weekIndex * 0.1).toFixed(2);
-        animationStyle = `style="animation: wave 2s infinite ease-in-out ${delay}s"`;
-      } else if (animation === "glimmer") {
-        const delay = (Math.random() * 5).toFixed(2);
-        animationStyle = `style="animation: glimmer 3s infinite ease-in-out ${delay}s"`;
-      }
+      const delay = animation === "wave" ? (weekIdx * 0.1).toFixed(2) : 
+                    animation === "fade" ? (i * 0.01).toFixed(2) : 
+                    (Math.random() * 2).toFixed(2);
+      
+      const animName = animation === "fade" ? "fade 8s infinite" :
+                       animation === "pulse" ? "pulse 2s infinite" :
+                       animation === "wave" ? "wave 2s infinite" :
+                       "glimmer 3s infinite";
+
+      animationStyle = `style="animation: ${animName} ease-in-out ${delay}s; ${animation === "fade" ? "opacity: 0;" : ""}"`;
     }
 
-    gridItems += `<rect x="${x}" y="${y}" width="${cellSizeVal}" height="${cellSizeVal}" fill="${color}" rx="${Math.max(1, cellSizeVal * 0.12)}" ${animationStyle} />\n`;
+    if (isIsometric) {
+      // 📐 Isometric Projection (Z-Sorted & Perfectly Centered)
+      // Range of (weekIdx - dayInWeek) is approx -6 to 52, midpoint is ~23
+      // Range of (weekIdx + dayInWeek) is approx 0 to 58, midpoint is ~29
+      const midW = (weeks - 1) / 2;
+      const midD = 3;
+      
+      const factorX = cellSizeVal * 0.9 + isoGap;
+      const factorY = cellSizeVal * 0.45 + isoGap / 2;
+      
+      const isoX = width / 2 + (weekIdx - dayInWeek - (midW - midD)) * factorX;
+      const isoY = (height - footerHeight) / 2 + (weekIdx + dayInWeek - (midW + midD)) * factorY + 20;
+      
+      const h = count > 0 ? Math.max(6, level * (cellSizeVal / 2)) : 2; 
+      const topColor = color;
+      const rightColor = darkenColor(color, 40);
+      const leftColor = darkenColor(color, 20);
+      const strokeColor = darkenColor(color, 60);
 
-    if (dayInWeek === 6) weekIndex++;
+      if (count > 0) {
+        gridItems += `<path d="M${isoX} ${isoY} L${isoX - cellSizeVal * 0.9} ${isoY - cellSizeVal * 0.45} L${isoX - cellSizeVal * 0.9} ${isoY - cellSizeVal * 0.45 - h} L${isoX} ${isoY - h} Z" fill="${leftColor}" stroke="${strokeColor}" stroke-width="0.1" class="lvl-${level}" />\n`;
+        gridItems += `<path d="M${isoX} ${isoY} L${isoX + cellSizeVal * 0.9} ${isoY - cellSizeVal * 0.45} L${isoX + cellSizeVal * 0.9} ${isoY - cellSizeVal * 0.45 - h} L${isoX} ${isoY - h} Z" fill="${rightColor}" stroke="${strokeColor}" stroke-width="0.1" class="lvl-${level}" />\n`;
+      }
+      
+      gridItems += `<path d="M${isoX} ${isoY - h} L${isoX + cellSizeVal * 0.9} ${isoY - h - cellSizeVal * 0.45} L${isoX} ${isoY - h - cellSizeVal * 0.9} L${isoX - cellSizeVal * 0.9} ${isoY - h - cellSizeVal * 0.45} Z" fill="${topColor}" stroke="${strokeColor}" stroke-width="0.1" class="lvl-${level}" ${animationStyle} />\n`;
+    } else {
+      // 🟦 Standard Flat View
+      const x = isVertical ? leftPadding + dayInWeek * (cellSizeVal + gap) : leftPadding + weekIdx * (cellSizeVal + gap);
+      const y = isVertical ? topPadding + weekIdx * (cellSizeVal + gap) : topPadding + dayInWeek * (cellSizeVal + gap);
+
+      if (shape === "circle") {
+        gridItems += `<circle cx="${x + cellSizeVal/2}" cy="${y + cellSizeVal/2}" r="${cellSizeVal/2}" fill="${color}" class="lvl-${level}" ${animationStyle} />\n`;
+      } else if (shape === "diamond") {
+        const s = cellSizeVal / 2;
+        gridItems += `<path d="M${x + s} ${y} L${x + cellSizeVal} ${y + s} L${x + s} ${y + cellSizeVal} L${x} ${y + s} Z" fill="${color}" class="lvl-${level}" ${animationStyle} />\n`;
+      } else if (shape === "leaf") {
+        gridItems += `<rect x="${x}" y="${y}" width="${cellSizeVal}" height="${cellSizeVal}" fill="${color}" rx="${cellSizeVal}" ry="${cellSizeVal * 0.2}" class="lvl-${level}" ${animationStyle} />\n`;
+      } else {
+        gridItems += `<rect x="${x}" y="${y}" width="${cellSizeVal}" height="${cellSizeVal}" fill="${color}" rx="${Math.max(1, cellSizeVal * 0.12)}" class="lvl-${level}" ${animationStyle} />\n`;
+      }
+    }
   }
 
   let labels = "";
@@ -262,20 +335,62 @@ export function generateSVG(
       }
     }
   } else {
-    days.forEach((day, i) => {
-      const y = topPadding + (i * 2 + 1) * (cellSizeVal + gap) + (cellSizeVal * 0.7);
-      labels += `<text x="${leftPadding - 10}" y="${y}" font-size="9" fill="${colors.text}" text-anchor="end" font-weight="bold">${day}</text>\n`;
-    });
-
     let lastMonth = -1;
-    for (let w = 0; w < weeks; w++) {
-      const currentDate = new Date(startDate);
-      currentDate.setDate(startDate.getDate() + (w * 7));
-      const month = currentDate.getMonth();
-      if (month !== lastMonth) {
-        const x = leftPadding + w * (cellSizeVal + gap);
-        labels += `<text x="${x}" y="${topPadding - 10}" font-size="9" fill="${colors.text}" font-weight="bold">${months[month]}</text>\n`;
-        lastMonth = month;
+    if (isIsometric) {
+      // Month labels along the Bottom-Right edge
+      const midW = (weeks - 1) / 2;
+      const midD = 3;
+      const factorX = cellSizeVal * 0.9 + isoGap;
+      const factorY = cellSizeVal * 0.45 + isoGap / 2;
+
+      let lastLabelW = -99;
+      const minWeekGap = cellSizeVal < 12 ? 5 : 3; // Need more weeks gap for smaller cells
+
+      for (let w = 0; w < weeks; w++) {
+        const currentDate = new Date(startDate);
+        currentDate.setDate(startDate.getDate() + (w * 7));
+        const month = currentDate.getMonth();
+        
+        // Only show month if it's a new month AND far enough from the last label
+        if (month !== lastMonth && (w - lastLabelW) >= minWeekGap) {
+          const labelOffset = cellSizeVal < 12 ? 12.5 : 9.5; // More offset for smaller cells
+          const isoX = width / 2 + (w - labelOffset - (midW - midD)) * factorX;
+          const isoY = (height - footerHeight) / 2 + (w + labelOffset - (midW + midD)) * factorY;
+          const fontSize = cellSizeVal < 12 ? 7 : 8; 
+          
+          labels += `<text x="${isoX}" y="${isoY}" font-size="${fontSize}" fill="${colors.text}" opacity="0.45" font-weight="bold" transform="rotate(-30, ${isoX}, ${isoY})" text-anchor="start">${months[month]}</text>\n`;
+          lastMonth = month;
+          lastLabelW = w;
+        }
+      }
+
+      // Day labels along the Bottom-Left edge
+      const daysAbbr = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+      daysAbbr.forEach((day, d) => {
+        if (d % 2 === 0) { // Show Sun, Tue, Thu, Sat
+          const labelOffset = cellSizeVal < 12 ? -3.5 : -1.8; // More offset for smaller cells
+          const isoX = width / 2 + (labelOffset - d - (midW - midD)) * factorX;
+          const isoY = (height - footerHeight) / 2 + (labelOffset + d - (midW + midD)) * factorY;
+          const fontSize = cellSizeVal < 12 ? 7 : 8;
+
+          labels += `<text x="${isoX}" y="${isoY}" font-size="${fontSize}" fill="${colors.text}" opacity="0.45" font-weight="bold" transform="rotate(30, ${isoX}, ${isoY})" text-anchor="end">${day}</text>\n`;
+        }
+      });
+    } else {
+      days.forEach((day, i) => {
+        const y = topPadding + (i * 2 + 1) * (cellSizeVal + gap) + (cellSizeVal * 0.7);
+        labels += `<text x="${leftPadding - 10}" y="${y}" font-size="9" fill="${colors.text}" text-anchor="end" font-weight="bold">${day}</text>\n`;
+      });
+
+      for (let w = 0; w < weeks; w++) {
+        const currentDate = new Date(startDate);
+        currentDate.setDate(startDate.getDate() + (w * 7));
+        const month = currentDate.getMonth();
+        if (month !== lastMonth) {
+          const x = leftPadding + w * (cellSizeVal + gap);
+          labels += `<text x="${x}" y="${topPadding - 10}" font-size="9" fill="${colors.text}" font-weight="bold">${months[month]}</text>\n`;
+          lastMonth = month;
+        }
       }
     }
   }
@@ -304,38 +419,57 @@ export function generateSVG(
           0%, 100% { opacity: 1; }
           50% { opacity: 0.8; filter: brightness(1.8); }
         }
-        rect { transform-box: fill-box; transform-origin: center; }
+        rect, path, circle { transform-box: fill-box; transform-origin: center; transition: all 0.3s ease; }
+        
+        /* Interactive Legend */
+        .legend-item { cursor: pointer; }
+        
+        /* When any legend item is hovered, dim the whole grid */
+        .legend-item:hover ~ .grid-container .lvl-0,
+        .legend-item:hover ~ .grid-container .lvl-1,
+        .legend-item:hover ~ .grid-container .lvl-2,
+        .legend-item:hover ~ .grid-container .lvl-3,
+        .legend-item:hover ~ .grid-container .lvl-4 {
+          opacity: 0.15;
+          filter: grayscale(0.8);
+        }
+        
+        /* Highlight specific levels */
+        .l0:hover ~ .grid-container .lvl-0,
+        .l1:hover ~ .grid-container .lvl-1,
+        .l2:hover ~ .grid-container .lvl-2,
+        .l3:hover ~ .grid-container .lvl-3,
+        .l4:hover ~ .grid-container .lvl-4 {
+          opacity: 1 !important;
+          filter: none !important;
+          transform: scale(1.15);
+        }
       </style>
       ${neonFilter}
       <rect width="100%" height="100%" fill="${colors.bg}" rx="8" />
       ${title ? `<text x="20" y="35" font-size="18" font-weight="900" fill="${colors.text}">${escapeHtml(title)}</text>` : ""}
-      <g ${theme === "neon" ? 'filter="url(#neon-glow)"' : ""}>${gridItems}</g>
-      ${labels}
       
+      <!-- Legend (Moved before grid for CSS sibling selector) -->
       <g transform="translate(${leftPadding}, ${height - footerHeight - watermarkHeight + 15})">
         ${isVertical ? `
-          <!-- Vertical Layout Footer: Spaced Out -->
           <g>
             <rect x="0" y="0" width="8" height="8" fill="${colors.github[3]}" rx="0" />
             <text x="12" y="8" font-size="8" fill="${colors.text}" font-weight="bold">Github</text>
-            
             <rect x="50" y="0" width="8" height="8" fill="${colors.gitlab[3]}" rx="0" />
             <text x="62" y="8" font-size="8" fill="${colors.text}" font-weight="bold">GitLab</text>
-            
             <rect x="104" y="0" width="8" height="8" fill="${colors.merged[3]}" rx="0" />
             <text x="116" y="8" font-size="8" fill="${colors.text}" font-weight="bold">Merged</text>
           </g>
           <g transform="translate(0, 22)">
             <text x="0" y="8" font-size="8" fill="${colors.text}" opacity="0.5">Less</text>
-            <rect x="25" y="0" width="8" height="8" fill="${colors.empty}" rx="0" />
-            <rect x="35" y="0" width="8" height="8" fill="${colors.github[0]}" rx="0" />
-            <rect x="45" y="0" width="8" height="8" fill="${colors.github[1]}" rx="0" />
-            <rect x="55" y="0" width="8" height="8" fill="${colors.github[2]}" rx="0" />
-            <rect x="65" y="0" width="8" height="8" fill="${colors.github[3]}" rx="0" />
+            <rect x="25" y="0" width="8" height="8" fill="${colors.empty}" rx="0" class="legend-item l0" />
+            <rect x="35" y="0" width="8" height="8" fill="${colors.github[0]}" rx="0" class="legend-item l1" />
+            <rect x="45" y="0" width="8" height="8" fill="${colors.github[1]}" rx="0" class="legend-item l2" />
+            <rect x="55" y="0" width="8" height="8" fill="${colors.github[2]}" rx="0" class="legend-item l3" />
+            <rect x="65" y="0" width="8" height="8" fill="${colors.github[3]}" rx="0" class="legend-item l4" />
             <text x="80" y="8" font-size="8" fill="${colors.text}" opacity="0.5">More</text>
           </g>
         ` : `
-          <!-- Horizontal Layout Footer -->
           <rect x="0" y="1" width="10" height="10" fill="${colors.github[3]}" rx="0" />
           <text x="14" y="10" font-size="9" fill="${colors.text}" font-weight="bold">GitHub</text>
           <rect x="60" y="1" width="10" height="10" fill="${colors.gitlab[3]}" rx="0" />
@@ -345,15 +479,18 @@ export function generateSVG(
           
           <g transform="translate(${mainWidth - 115}, 0)">
             <text x="0" y="10" font-size="8" fill="${colors.text}" opacity="0.5">Less</text>
-            <rect x="26" y="1" width="10" height="10" fill="${colors.empty}" rx="0" />
-            <rect x="38" y="1" width="10" height="10" fill="${colors.github[0]}" rx="0" />
-            <rect x="50" y="1" width="10" height="10" fill="${colors.github[1]}" rx="0" />
-            <rect x="62" y="1" width="10" height="10" fill="${colors.github[2]}" rx="0" />
-            <rect x="74" y="1" width="10" height="10" fill="${colors.github[3]}" rx="0" />
+            <rect x="26" y="1" width="10" height="10" fill="${colors.empty}" rx="0" class="legend-item l0" />
+            <rect x="38" y="1" width="10" height="10" fill="${colors.github[0]}" rx="0" class="legend-item l1" />
+            <rect x="50" y="1" width="10" height="10" fill="${colors.github[1]}" rx="0" class="legend-item l2" />
+            <rect x="62" y="1" width="10" height="10" fill="${colors.github[2]}" rx="0" class="legend-item l3" />
+            <rect x="74" y="1" width="10" height="10" fill="${colors.github[3]}" rx="0" class="legend-item l4" />
             <text x="90" y="10" font-size="8" fill="${colors.text}" opacity="0.5">More</text>
           </g>
         `}
       </g>
+      
+      <g class="grid-container" ${theme === "neon" ? 'filter="url(#neon-glow)"' : ""}>${gridItems}</g>
+      ${labels}
       ${!isPro ? `<text x="${width / 2}" y="${height - 10}" font-size="8" fill="${colors.text}" opacity="0.3" text-anchor="middle">Powered by GitComBridge</text>` : ""}
     </svg>
   `;
