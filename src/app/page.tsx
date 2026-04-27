@@ -65,13 +65,26 @@ export default function Home() {
   const [cellSize, setCellSize] = useState<string>("L");
   const [layout, setLayout] = useState<string>("horizontal");
   const [customTitle, setCustomTitle] = useState("");
+  const [animation, setAnimation] = useState<string>("none");
+  const [viewMode, setViewMode] = useState<string>("flat");
+  const [shape, setShape] = useState<string>("square");
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastModified, setLastModified] = useState(Date.now());
 
   // Track changes to refresh preview
   useEffect(() => {
     setLastModified(Date.now());
-  }, [weeks, cellSize, layout, customTitle, previewTheme]);
+  }, [weeks, cellSize, layout, customTitle, previewTheme, animation, viewMode, shape]);
+
+  // Handle 3D View restrictions
+  useEffect(() => {
+    if (viewMode === 'isometric') {
+      setShape('square');
+      setAnimation('none');
+      setLayout('horizontal');
+      if (cellSize === 'M') setCellSize('S');
+    }
+  }, [viewMode]);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -114,6 +127,9 @@ export default function Home() {
     if (cellSize !== "M") url += `&cellSize=${cellSize}`;
     if (layout !== "horizontal") url += `&layout=${layout}`;
     if (customTitle) url += `&title=${encodeURIComponent(customTitle)}`;
+    if (animation !== "none") url += `&animation=${animation}`;
+    if (viewMode !== "flat") url += `&viewMode=${viewMode}`;
+    if (shape !== "square") url += `&shape=${shape}`;
     
     return `${url}&t=${lastModified}`;
   };
@@ -306,7 +322,7 @@ export default function Home() {
       </section>
 
       {/* Console Workspace */}
-      <section id="generator" className="py-24 px-4 bg-black/5">
+      <section id="generator" className="py-24 px-4">
         <div className="max-w-5xl mx-auto space-y-12">
           {session ? (
             <motion.div initial={{ opacity: 0, y: 40 }} whileInView={{ opacity: 1, y: 0 }} className="glass-card overflow-hidden shadow-2xl border-white/10 dark:border-white/5">
@@ -433,6 +449,51 @@ export default function Home() {
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">
+                          {/* 1. View Mode (Primary Choice) */}
+                          <div className="space-y-1.5">
+                            <div className="flex items-center justify-between">
+                              <p className={`text-[9px] font-bold uppercase opacity-40`}>View Mode</p>
+                              {accountStatus.tier !== 'pro' && <Lock className="w-2.5 h-2.5 text-yellow-500/50" />}
+                            </div>
+                            <select 
+                              value={viewMode}
+                              disabled={accountStatus.tier !== 'pro'}
+                              onChange={(e) => accountStatus.tier === 'pro' ? setViewMode(e.target.value) : setShowUpgradeModal(true)}
+                              className={`w-full border rounded-lg px-3 py-2 text-xs outline-none cursor-pointer transition-all bg-black/5 dark:bg-white/5 border-black/5 dark:border-white/10 text-current ${accountStatus.tier !== 'pro' ? 'cursor-not-allowed opacity-50' : ''}`}
+                            >
+                              <option value="flat">Flat (Classic)</option>
+                              <option value="isometric">Isometric (3D)</option>
+                            </select>
+                          </div>
+
+                          {/* 2. Cell Size (Restricted to S/L for 3D) */}
+                          <div className="space-y-1.5">
+                            <div className="flex items-center justify-between">
+                              <p className={`text-[9px] font-bold uppercase opacity-40`}>{t('cell_size')}</p>
+                              {accountStatus.tier !== 'pro' && <Lock className="w-2.5 h-2.5 text-yellow-500/50" />}
+                            </div>
+                            <div className="flex gap-1">
+                              {["S", "M", "L", "XL"].map(s => {
+                                const is3DRestricted = viewMode === 'isometric' && (s === 'M' || s === 'XL');
+                                return (
+                                  <button 
+                                    key={s}
+                                    disabled={accountStatus.tier !== 'pro' || is3DRestricted}
+                                    onClick={() => accountStatus.tier === 'pro' ? setCellSize(s) : setShowUpgradeModal(true)}
+                                    className={`flex-1 py-1.5 rounded-md text-[10px] font-bold border transition-all cursor-pointer ${
+                                      cellSize === s 
+                                        ? 'bg-purple-500/20 border-purple-500/50 text-purple-600 dark:text-purple-300'
+                                        : 'bg-black/5 dark:bg-white/5 border-black/5 dark:border-white/10 opacity-50 hover:opacity-100 text-current'
+                                    } ${(accountStatus.tier !== 'pro' || is3DRestricted) ? 'cursor-not-allowed opacity-20 grayscale' : ''}`}
+                                  >
+                                    {s}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+
+                          {/* 3. Custom Title */}
                           <div className="space-y-1.5">
                             <p className={`text-[9px] font-bold uppercase opacity-40`}>{t('custom_title')}</p>
                             <input 
@@ -444,52 +505,82 @@ export default function Home() {
                               className={`w-full border rounded-lg px-3 py-2 text-xs outline-none transition-all bg-black/5 dark:bg-white/5 border-black/5 dark:border-white/10 focus:border-purple-500/50 text-current placeholder:opacity-30 ${accountStatus.tier !== 'pro' ? 'cursor-not-allowed opacity-50' : ''}`}
                             />
                           </div>
+
+                          {/* 4. Weeks (Disabled for 3D) */}
                           <div className="space-y-1.5">
-                            <p className={`text-[9px] font-bold uppercase opacity-40`}>{t('weeks')}</p>
+                            <div className="flex items-center justify-between">
+                              <p className={`text-[9px] font-bold uppercase opacity-40`}>{t('weeks')}</p>
+                              {viewMode === 'isometric' && <span className="text-[8px] text-purple-500/60 font-bold uppercase">Auto</span>}
+                            </div>
                             <select 
                               value={weeks}
-                              disabled={accountStatus.tier !== 'pro'}
+                              disabled={accountStatus.tier !== 'pro' || viewMode === 'isometric'}
                               onChange={(e) => accountStatus.tier === 'pro' ? setWeeks(parseInt(e.target.value)) : setShowUpgradeModal(true)}
-                              className={`w-full border rounded-lg px-3 py-2 text-xs outline-none cursor-pointer transition-all bg-black/5 dark:bg-white/5 border-black/5 dark:border-white/10 text-current ${accountStatus.tier !== 'pro' ? 'cursor-not-allowed opacity-50' : ''}`}
+                              className={`w-full border rounded-lg px-3 py-2 text-xs outline-none cursor-pointer transition-all bg-black/5 dark:bg-white/5 border-black/5 dark:border-white/10 text-current ${accountStatus.tier !== 'pro' || viewMode === 'isometric' ? 'cursor-not-allowed opacity-30' : ''}`}
                             >
                               <option value={26}>{t('half_year')}</option>
                               <option value={52}>{t('standard')}</option>
                               <option value={104}>{t('two_years')}</option>
                             </select>
                           </div>
+
+                          {/* 5. Layout (Disabled for 3D) */}
                           <div className="space-y-1.5">
-                            <p className={`text-[9px] font-bold uppercase opacity-40`}>Layout</p>
+                            <div className="flex items-center justify-between">
+                              <p className={`text-[9px] font-bold uppercase opacity-40`}>Layout</p>
+                            </div>
                             <select 
                               value={layout}
-                              disabled={accountStatus.tier !== 'pro'}
+                              disabled={accountStatus.tier !== 'pro' || viewMode === 'isometric'}
                               onChange={(e) => accountStatus.tier === 'pro' ? setLayout(e.target.value) : setShowUpgradeModal(true)}
-                              className={`w-full border rounded-lg px-3 py-2 text-xs outline-none cursor-pointer transition-all bg-black/5 dark:bg-white/5 border-black/5 dark:border-white/10 text-current ${accountStatus.tier !== 'pro' ? 'cursor-not-allowed opacity-50' : ''}`}
+                              className={`w-full border rounded-lg px-3 py-2 text-xs outline-none cursor-pointer transition-all bg-black/5 dark:bg-white/5 border-black/5 dark:border-white/10 text-current ${accountStatus.tier !== 'pro' || viewMode === 'isometric' ? 'cursor-not-allowed opacity-30' : ''}`}
                             >
                               <option value="horizontal">{t('horiz_normal')}</option>
                               <option value="vertical">{t('vert_sidebar')}</option>
                             </select>
                           </div>
+
+                          {/* 6. Animation (Disabled for 3D) */}
                           <div className="space-y-1.5">
-                            <p className={`text-[9px] font-bold uppercase opacity-40`}>{t('cell_size')}</p>
-                            <div className="flex gap-1">
-                              {["S", "M", "L", "XL"].map(s => (
-                                <button 
-                                  key={s}
-                                  disabled={accountStatus.tier !== 'pro'}
-                                  onClick={() => accountStatus.tier === 'pro' ? setCellSize(s) : setShowUpgradeModal(true)}
-                                  className={`flex-1 py-1.5 rounded-md text-[10px] font-bold border transition-all cursor-pointer ${
-                                    cellSize === s 
-                                      ? 'bg-purple-500/20 border-purple-500/50 text-purple-600 dark:text-purple-300'
-                                      : 'bg-black/5 dark:bg-white/5 border-black/5 dark:border-white/10 opacity-50 hover:opacity-100 text-current'
-                                  } ${accountStatus.tier !== 'pro' ? 'cursor-not-allowed' : ''}`}
-                                >
-                                  {s}
-                                </button>
-                              ))}
+                            <div className="flex items-center justify-between">
+                              <p className={`text-[9px] font-bold uppercase opacity-40`}>Animation</p>
+                              {accountStatus.tier !== 'pro' && <Lock className="w-2.5 h-2.5 text-yellow-500/50" />}
                             </div>
+                            <select 
+                              value={animation}
+                              disabled={accountStatus.tier !== 'pro' || viewMode === 'isometric'}
+                              onChange={(e) => accountStatus.tier === 'pro' ? setAnimation(e.target.value) : setShowUpgradeModal(true)}
+                              className={`w-full border rounded-lg px-3 py-2 text-xs outline-none cursor-pointer transition-all bg-black/5 dark:bg-white/5 border-black/5 dark:border-white/10 text-current ${accountStatus.tier !== 'pro' || viewMode === 'isometric' ? 'cursor-not-allowed opacity-30' : ''}`}
+                            >
+                              <option value="none">None</option>
+                              <option value="pulse">Pulse</option>
+                              <option value="fade">Fade</option>
+                              <option value="wave">Wave</option>
+                              <option value="glimmer">Glimmer</option>
+                            </select>
                           </div>
+
+                          {/* 7. Shape (Disabled for 3D) */}
+                          <div className="space-y-1.5">
+                            <div className="flex items-center justify-between">
+                              <p className={`text-[9px] font-bold uppercase opacity-40`}>Shape</p>
+                              {accountStatus.tier !== 'pro' && <Lock className="w-2.5 h-2.5 text-yellow-500/50" />}
+                            </div>
+                            <select 
+                              value={shape}
+                              disabled={accountStatus.tier !== 'pro' || viewMode === 'isometric'}
+                              onChange={(e) => accountStatus.tier === 'pro' ? setShape(e.target.value) : setShowUpgradeModal(true)}
+                              className={`w-full border rounded-lg px-3 py-2 text-xs outline-none cursor-pointer transition-all bg-black/5 dark:bg-white/5 border-black/5 dark:border-white/10 text-current ${accountStatus.tier !== 'pro' || viewMode === 'isometric' ? 'cursor-not-allowed opacity-30' : ''}`}
+                            >
+                              <option value="square">Square</option>
+                              <option value="circle">Circle</option>
+                              <option value="diamond">Diamond</option>
+                              <option value="leaf">Leaf</option>
+                            </select>
+                          </div>
+
                           <div className="space-y-1.5 col-span-2">
-                            {/* Output Mode removed as requested */}
+                            {/* Space filler */}
                           </div>
                         </div>
                       </div>
@@ -524,11 +615,11 @@ export default function Home() {
                             </label>
                             <div className="relative group flex-1 min-h-0">
                               <pre 
-                                className={`p-4 pr-12 rounded-xl font-mono text-[10px] border h-full transition-colors bg-black/5 dark:bg-black/40 text-purple-600 dark:text-gitlab-purple border-black/5 dark:border-white/10 break-all whitespace-pre-wrap overflow-y-auto`}
+                                className={`p-4 pr-12 rounded-xl font-mono text-[10px] border h-full flex items-center transition-colors bg-black/5 dark:bg-black/40 text-purple-600 dark:text-gitlab-purple border-black/5 dark:border-white/10 break-all whitespace-pre-wrap overflow-y-auto`}
                                 style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                               >
                                 <style dangerouslySetInnerHTML={{__html: `pre::-webkit-scrollbar { display: none; }`}} />
-                                <code>{getFormattedCode()}</code>
+                                <code className="w-full">{getFormattedCode()}</code>
                               </pre>
                               <button 
                                 onClick={handleCopy}
