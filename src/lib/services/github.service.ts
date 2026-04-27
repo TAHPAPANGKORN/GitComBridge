@@ -9,7 +9,7 @@ export class GitHubService {
   }
 
   /**
-   * Fetches GitHub contributions for the last year using GraphQL API
+   * Fetches GitHub contributions for the last 2 years using GraphQL API
    */
   async fetchContributions(): Promise<ContributionData> {
     if (!this.token) {
@@ -17,38 +17,52 @@ export class GitHubService {
       return {};
     }
 
-    const query = `
-      query {
-        viewer {
-          contributionsCollection {
-            contributionCalendar {
-              weeks {
-                contributionDays {
-                  date
-                  contributionCount
+    const contributions: ContributionData = {};
+    const now = new Date();
+    const oneYearAgo = new Date();
+    oneYearAgo.setFullYear(now.getFullYear() - 1);
+
+    // Function to fetch a specific year range
+    const fetchRange = async (from: Date, to: Date) => {
+      const query = `
+        query($from: DateTime, $to: DateTime) {
+          viewer {
+            contributionsCollection(from: $from, to: $to) {
+              contributionCalendar {
+                weeks {
+                  contributionDays {
+                    date
+                    contributionCount
+                  }
                 }
               }
             }
           }
         }
-      }
-    `;
+      `;
 
-    try {
       const response: any = await graphql(query, {
+        from: from.toISOString(),
+        to: to.toISOString(),
         headers: {
           authorization: `token ${this.token}`,
         },
       });
 
-      const contributions: ContributionData = {};
       const weeks = response.viewer.contributionsCollection.contributionCalendar.weeks;
-
       for (const week of weeks) {
         for (const day of week.contributionDays) {
           contributions[day.date] = day.contributionCount;
         }
       }
+    };
+
+    try {
+      // Fetch current year and previous year in parallel
+      await Promise.all([
+        fetchRange(oneYearAgo, now),
+        fetchRange(new Date(oneYearAgo.getTime() - 365 * 24 * 60 * 60 * 1000), oneYearAgo)
+      ]);
 
       return contributions;
     } catch (error) {

@@ -24,7 +24,7 @@ export class GitLabService {
     }
 
     const contributions: ContributionData = {};
-    const oneYearAgo = format(subYears(new Date(), 1), "yyyy-MM-dd");
+    const twoYearsAgo = format(subYears(new Date(), 2), "yyyy-MM-dd");
     
     try {
       // Fetch multiple pages in parallel (e.g., first 10 pages for better coverage)
@@ -33,7 +33,7 @@ export class GitLabService {
       const pageRequests = pageNumbers.map(page => 
         axios.get(`${this.instanceUrl}/api/v4/events`, {
           params: {
-            after: oneYearAgo,
+            after: twoYearsAgo,
             per_page: 100,
             page: page,
           },
