@@ -430,7 +430,12 @@ export function generateSVG(
           0%, 100% { opacity: 1; }
           50% { opacity: 0.8; filter: brightness(1.8); }
         }
-        rect, path, circle { transform-box: fill-box; transform-origin: center; transition: all 0.3s ease; }
+        rect, path, circle { transform-box: fill-box; transform-origin: center; transition: all 0.2s ease-out; }
+        rect:hover, path:hover, circle:hover { 
+          filter: brightness(1.5) saturate(1.2); 
+          transform: scale(1.1); 
+          cursor: pointer;
+        }
         
         /* Interactive Legend */
         .legend-item { cursor: pointer; }
@@ -441,6 +446,7 @@ export function generateSVG(
         .legend-item:hover ~ .grid-container circle {
           opacity: 0.15;
           filter: grayscale(0.8);
+          transition: all 0.4s ease;
         }
         
         /* Highlight specific levels */
@@ -454,11 +460,13 @@ export function generateSVG(
         .l-mg:hover ~ .grid-container .type-mg {
           opacity: 1 !important;
           filter: brightness(1.2) !important;
+          transform: scale(1.05);
         }
         
         /* Dim labels when legend is hovered */
         .legend-item:hover ~ .labels-container {
           opacity: 0.3;
+          filter: blur(0.5px);
         }
       </style>
       ${neonFilter}
