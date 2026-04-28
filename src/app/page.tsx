@@ -236,7 +236,7 @@ export default function Home() {
       {/* Live Showcase Section */}
       <section id="showcase" className="py-24 px-4 relative overflow-hidden">
         <div className="max-w-5xl mx-auto">
-          <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-6">
+          <div className="flex flex-col md:flex-row justify-between items-center md:items-end mb-16 gap-6">
             <div className="text-center md:text-left">
               <h2 className="text-4xl font-black mb-4">Live Showcase</h2>
               <p className="opacity-60">See how it looks on a real profile</p>
@@ -279,7 +279,7 @@ export default function Home() {
             </div>
             
             {/* The Graph Demo */}
-            <div className="p-8 flex flex-col items-center justify-center bg-[#0d1117] min-h-[300px]">
+            <div className="p-2 sm:p-8 flex flex-col items-center justify-center bg-[#0d1117] min-h-[300px]">
               <div className="w-full max-w-3xl space-y-8">
                  <div className="space-y-2">
                     <div className="h-4 w-full bg-white/5 rounded" />
@@ -706,22 +706,25 @@ export default function Home() {
 
                   {/* Row 2: Full Width Visual Output */}
                   <div className="space-y-4 pt-4 border-t border-white/5">
-                    <div className="flex items-center justify-between">
-                      <label className="text-xs font-black opacity-50 uppercase tracking-widest flex items-center gap-2">
-                        <Maximize2 className="w-3 h-3" /> {t('visual_output')}
-                      </label>
-                      <div className="flex flex-wrap items-center gap-4">
-                        <span className="flex items-center gap-1.5 text-[10px] font-black text-green-400/80 bg-green-500/10 px-2.5 py-1 rounded-full border border-green-500/20 uppercase tracking-widest shadow-[0_0_15px_rgba(34,197,94,0.1)]">
-                          <MousePointer2 className="w-3 h-3 animate-bounce" /> {t('interactive_enabled')}
+                    <div className="flex flex-col space-y-4">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-black opacity-50 uppercase tracking-widest flex items-center gap-2">
+                          <Maximize2 className="w-3 h-3" /> {t('visual_output')}
+                        </label>
+                        <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{t('realtime_preview')}</span>
+                      </div>
+                      
+                      <div className="flex flex-wrap gap-2">
+                        <span className="flex items-center gap-1.5 text-[9px] sm:text-[10px] font-black text-green-400/80 bg-green-500/10 px-2.5 py-1 rounded-full border border-green-500/20 uppercase tracking-widest shadow-[0_0_15px_rgba(34,197,94,0.1)]">
+                          <MousePointer2 className="w-2.5 h-2.5 sm:w-3 sm:h-3 animate-bounce" /> {t('interactive_enabled')}
                         </span>
-                        <span className="flex items-center gap-1.5 text-[10px] font-bold text-purple-400/60 bg-purple-500/5 px-2.5 py-1 rounded-full border border-purple-500/10 uppercase tracking-widest">
-                          <Info className="w-3 h-3" /> {t('hover_hint')}
+                        <span className="flex items-center gap-1.5 text-[9px] sm:text-[10px] font-bold text-purple-400/60 bg-purple-500/5 px-2.5 py-1 rounded-full border border-purple-500/10 uppercase tracking-widest">
+                          <Info className="w-2.5 h-2.5 sm:w-3 sm:h-3" /> {t('hover_hint')}
                         </span>
-                        <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-auto">{t('realtime_preview')}</span>
                       </div>
                     </div>
                     
-                    <div className="glass-card p-8 flex items-center justify-center min-h-[350px] relative transition-all overflow-hidden border-black/5 dark:border-white/5 bg-black/5 dark:bg-[#0d1117]">
+                    <div className="glass-card p-2 sm:p-8 flex items-center justify-center min-h-[350px] relative transition-all overflow-hidden border-black/5 dark:border-white/5 bg-black/5 dark:bg-[#0d1117]">
                       {isLoading && (
                         <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/40 backdrop-blur-[2px]">
                           <Loader2 className="w-8 h-8 animate-spin text-purple-500" />
