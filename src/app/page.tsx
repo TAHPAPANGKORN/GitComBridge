@@ -67,6 +67,7 @@ export default function Home() {
   const [customTitle, setCustomTitle] = useState("");
   const [animation, setAnimation] = useState<string>("none");
   const [viewMode, setViewMode] = useState<string>("flat");
+  const [showcaseViewMode, setShowcaseViewMode] = useState<string>("flat");
   const [shape, setShape] = useState<string>("square");
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastModified, setLastModified] = useState(Date.now());
@@ -116,20 +117,22 @@ export default function Home() {
     }
   }, [session, baseUrl]);
 
-  const getFinalUrl = (pTheme: string, customName?: string) => {
+  const getFinalUrl = (pTheme: string, customName?: string, overrideViewMode?: string) => {
     if (!baseUrl) return null;
     const name = customName || (session?.user?.name ? encodeURIComponent(session.user.name) : "demo");
     const endpoint = "graph";
     
     let url = `${baseUrl}/api/${endpoint}/${name}?theme=${pTheme}`;
     
-    if (weeks !== 52) url += `&weeks=${weeks}`;
+    const activeViewMode = overrideViewMode || viewMode;
+    
+    if (weeks !== 52 && activeViewMode !== "isometric") url += `&weeks=${weeks}`;
     if (cellSize !== "M") url += `&cellSize=${cellSize}`;
-    if (layout !== "horizontal") url += `&layout=${layout}`;
+    if (layout !== "horizontal" && activeViewMode !== "isometric") url += `&layout=${layout}`;
     if (customTitle) url += `&title=${encodeURIComponent(customTitle)}`;
-    if (animation !== "none") url += `&animation=${animation}`;
-    if (viewMode !== "flat") url += `&viewMode=${viewMode}`;
-    if (shape !== "square") url += `&shape=${shape}`;
+    if (animation !== "none" && activeViewMode !== "isometric") url += `&animation=${animation}`;
+    if (activeViewMode !== "flat") url += `&viewMode=${activeViewMode}`;
+    if (shape !== "square" && activeViewMode !== "isometric") url += `&shape=${shape}`;
     
     return `${url}&t=${lastModified}`;
   };
@@ -233,9 +236,36 @@ export default function Home() {
       {/* Live Showcase Section */}
       <section id="showcase" className="py-24 px-4 relative overflow-hidden">
         <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-black mb-4">Live Showcase</h2>
-            <p className="opacity-60">See how it looks on a real profile</p>
+          <div className="flex flex-col md:flex-row justify-between items-center md:items-end mb-16 gap-6">
+            <div className="text-center md:text-left">
+              <h2 className="text-4xl font-black mb-4">Live Showcase</h2>
+              <p className="opacity-60">See how it looks on a real profile</p>
+            </div>
+            
+            {/* View Mode Toggle */}
+            <div className="flex p-1 bg-white/5 rounded-xl border border-white/10 backdrop-blur-sm shadow-2xl">
+              <button 
+                onClick={() => setShowcaseViewMode("flat")}
+                className={`px-6 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer ${
+                  showcaseViewMode === 'flat' 
+                    ? 'bg-gradient-to-r from-gitlab-orange to-gitlab-purple text-white shadow-lg' 
+                    : 'opacity-40 hover:opacity-100 text-white'
+                }`}
+              >
+                {t('view_flat')}
+              </button>
+              <button 
+                onClick={() => setShowcaseViewMode("isometric")}
+                className={`px-6 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer flex items-center gap-2 ${
+                  showcaseViewMode === 'isometric' 
+                    ? 'bg-gradient-to-r from-gitlab-orange to-gitlab-purple text-white shadow-lg' 
+                    : 'opacity-40 hover:opacity-100 text-white'
+                }`}
+              >
+                <Layers className={`w-3 h-3 ${showcaseViewMode === 'isometric' ? 'animate-pulse' : ''}`} />
+                {t('view_3d')}
+              </button>
+            </div>
           </div>
           
           <div className="glass-card p-2 md:p-4 bg-white/5 border-none shadow-2xl overflow-hidden">
@@ -249,19 +279,26 @@ export default function Home() {
             </div>
             
             {/* The Graph Demo */}
-            <div className="p-8 flex flex-col items-center justify-center bg-[#0d1117] min-h-[300px]">
+            <div className="p-2 sm:p-8 flex flex-col items-center justify-center bg-[#0d1117] min-h-[300px]">
               <div className="w-full max-w-3xl space-y-8">
                  <div className="space-y-2">
                     <div className="h-4 w-full bg-white/5 rounded" />
                     <div className="h-4 w-5/6 bg-white/5 rounded" />
                  </div>
-                 <div className="p-6 rounded-xl border border-white/10 bg-black/40 shadow-xl">
-                    {getFinalUrl('dark', 'demo') && (
-                      <img 
-                        src={getFinalUrl('dark', 'demo') as string} 
-                        alt="Demo Graph" 
-                        className="w-full h-auto"
-                      />
+                 <div className="p-6 rounded-xl border border-white/10 bg-black/40 shadow-xl overflow-hidden relative min-h-[200px] flex items-center justify-center">
+                    {getFinalUrl('dark', 'demo', showcaseViewMode) && (
+                      <object 
+                        key={`showcase-main-${showcaseViewMode}`}
+                        data={getFinalUrl('dark', 'demo', showcaseViewMode) as string} 
+                        type="image/svg+xml"
+                        className={`w-full h-auto transition-all duration-700 pointer-events-auto ${showcaseViewMode === 'isometric' ? 'scale-110' : 'scale-100'}`}
+                      >
+                        <img 
+                          src={getFinalUrl('dark', 'demo', showcaseViewMode) as string} 
+                          alt="Demo Graph" 
+                          className="w-full h-auto"
+                        />
+                      </object>
                     )}
                  </div>
                  <div className="h-4 w-3/4 bg-white/5 rounded" />
@@ -270,26 +307,48 @@ export default function Home() {
           </div>
           
           <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-8">
-             <div className="glass-card p-8 bg-white/5 text-center">
+              <div className="glass-card p-8 bg-white/5 text-center overflow-hidden">
                 <h4 className="font-bold mb-4 flex items-center justify-center gap-2">
                   <Sun className="w-5 h-5 text-yellow-500" /> Light Mode Profile
                 </h4>
-                <div className="p-4 bg-white rounded-lg shadow-inner">
-                  {getFinalUrl('light', 'demo') && (
-                    <img src={getFinalUrl('light', 'demo') as string} alt="Light Demo" className="w-full h-auto" />
+                <div className="p-4 bg-white rounded-lg shadow-inner overflow-hidden flex items-center justify-center min-h-[150px]">
+                  {getFinalUrl('light', 'demo', showcaseViewMode) && (
+                    <object 
+                      key={`showcase-light-${showcaseViewMode}`}
+                      data={getFinalUrl('light', 'demo', showcaseViewMode) as string} 
+                      type="image/svg+xml"
+                      className={`w-full h-auto transition-all duration-700 pointer-events-auto ${showcaseViewMode === 'isometric' ? 'scale-110' : 'scale-100'}`}
+                    >
+                      <img 
+                        src={getFinalUrl('light', 'demo', showcaseViewMode) as string} 
+                        alt="Light Demo" 
+                        className="w-full h-auto"
+                      />
+                    </object>
                   )}
                 </div>
-             </div>
-             <div className="glass-card p-8 bg-white/5 text-center">
+              </div>
+              <div className="glass-card p-8 bg-white/5 text-center overflow-hidden">
                 <h4 className="font-bold mb-4 flex items-center justify-center gap-2">
                   <Moon className="w-5 h-5 text-purple-500" /> Dark Mode Profile
                 </h4>
-                <div className="p-4 bg-[#0d1117] rounded-lg shadow-inner">
-                  {getFinalUrl('dark', 'demo') && (
-                    <img src={getFinalUrl('dark', 'demo') as string} alt="Dark Demo" className="w-full h-auto" />
+                <div className="p-4 bg-[#0d1117] rounded-lg shadow-inner overflow-hidden flex items-center justify-center min-h-[150px]">
+                  {getFinalUrl('dark', 'demo', showcaseViewMode) && (
+                    <object 
+                      key={`showcase-dark-${showcaseViewMode}`}
+                      data={getFinalUrl('dark', 'demo', showcaseViewMode) as string} 
+                      type="image/svg+xml"
+                      className={`w-full h-auto transition-all duration-700 pointer-events-auto ${showcaseViewMode === 'isometric' ? 'scale-110' : 'scale-100'}`}
+                    >
+                      <img 
+                        src={getFinalUrl('dark', 'demo', showcaseViewMode) as string} 
+                        alt="Dark Demo" 
+                        className="w-full h-auto"
+                      />
+                    </object>
                   )}
                 </div>
-             </div>
+              </div>
           </div>
         </div>
       </section>
@@ -647,22 +706,25 @@ export default function Home() {
 
                   {/* Row 2: Full Width Visual Output */}
                   <div className="space-y-4 pt-4 border-t border-white/5">
-                    <div className="flex items-center justify-between">
-                      <label className="text-xs font-black opacity-50 uppercase tracking-widest flex items-center gap-2">
-                        <Maximize2 className="w-3 h-3" /> {t('visual_output')}
-                      </label>
-                      <div className="flex flex-wrap items-center gap-4">
-                        <span className="flex items-center gap-1.5 text-[10px] font-black text-green-400/80 bg-green-500/10 px-2.5 py-1 rounded-full border border-green-500/20 uppercase tracking-widest shadow-[0_0_15px_rgba(34,197,94,0.1)]">
-                          <MousePointer2 className="w-3 h-3 animate-bounce" /> {t('interactive_enabled')}
+                    <div className="flex flex-col space-y-4">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-black opacity-50 uppercase tracking-widest flex items-center gap-2">
+                          <Maximize2 className="w-3 h-3" /> {t('visual_output')}
+                        </label>
+                        <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{t('realtime_preview')}</span>
+                      </div>
+                      
+                      <div className="flex flex-wrap gap-2">
+                        <span className="flex items-center gap-1.5 text-[9px] sm:text-[10px] font-black text-green-400/80 bg-green-500/10 px-2.5 py-1 rounded-full border border-green-500/20 uppercase tracking-widest shadow-[0_0_15px_rgba(34,197,94,0.1)]">
+                          <MousePointer2 className="w-2.5 h-2.5 sm:w-3 sm:h-3 animate-bounce" /> {t('interactive_enabled')}
                         </span>
-                        <span className="flex items-center gap-1.5 text-[10px] font-bold text-purple-400/60 bg-purple-500/5 px-2.5 py-1 rounded-full border border-purple-500/10 uppercase tracking-widest">
-                          <Info className="w-3 h-3" /> {t('hover_hint')}
+                        <span className="flex items-center gap-1.5 text-[9px] sm:text-[10px] font-bold text-purple-400/60 bg-purple-500/5 px-2.5 py-1 rounded-full border border-purple-500/10 uppercase tracking-widest">
+                          <Info className="w-2.5 h-2.5 sm:w-3 sm:h-3" /> {t('hover_hint')}
                         </span>
-                        <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-auto">{t('realtime_preview')}</span>
                       </div>
                     </div>
                     
-                    <div className="glass-card p-8 flex items-center justify-center min-h-[350px] relative transition-all overflow-hidden border-black/5 dark:border-white/5 bg-black/5 dark:bg-[#0d1117]">
+                    <div className="glass-card p-2 sm:p-8 flex items-center justify-center min-h-[350px] relative transition-all overflow-hidden border-black/5 dark:border-white/5 bg-black/5 dark:bg-[#0d1117]">
                       {isLoading && (
                         <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/40 backdrop-blur-[2px]">
                           <Loader2 className="w-8 h-8 animate-spin text-purple-500" />

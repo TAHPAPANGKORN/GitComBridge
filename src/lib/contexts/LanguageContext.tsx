@@ -87,6 +87,8 @@ const translations = {
     get_my_graph: "Get My Graph Now",
     interactive_enabled: "Interactive Enabled",
     hover_hint: "Try hovering over the legend colors!",
+    view_flat: "Normal View",
+    view_3d: "3D View",
   },
   TH: {
     hero_title: "รวมทุกการมีส่วนร่วมในกราฟเดียว",
@@ -164,6 +166,8 @@ const translations = {
     get_my_graph: "สร้างกราฟของฉันตอนนี้",
     interactive_enabled: "รองรับ Interactive",
     hover_hint: "ลองวางเมาส์ทับแถบสีด้านล่างดูสิ!",
+    view_flat: "มุมมองปกติ",
+    view_3d: "มุมมอง 3D",
   }
 };
 
