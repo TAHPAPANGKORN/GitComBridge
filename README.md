@@ -4,21 +4,22 @@
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-v4-38bdf8?style=for-the-badge&logo=tailwind-css)](https://tailwindcss.com)
 [![Stripe](https://img.shields.io/badge/Stripe-Payments-626cd9?style=for-the-badge&logo=stripe)](https://stripe.com)
 [![Prisma](https://img.shields.io/badge/Prisma-ORM-2d3748?style=for-the-badge&logo=prisma)](https://prisma.io)
+[![TypeScript](https://img.shields.io/badge/TypeScript-6.0-3178c6?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
 
-**GitComBridge** is a powerful, unified contribution graph generator that seamlessly merges your coding activity from both **GitHub** and **GitLab** into one stunning, real-time SVG visualization.
+**GitComBridge** is a premium, unified contribution graph generator. It merges your coding activity from **GitHub** and **GitLab** into a single, stunning SVG visualization that you can embed anywhere.
 
 ## ✨ Key Features
 
-- 🔗 **Dual-Platform Sync**: Connect both GitHub and GitLab accounts to see your complete impact.
-- 🎨 **12+ Premium Themes**: From classic `dark`/`light` to `Neon`, `Monokai`, `Sakura`, and `Ocean`.
-- 📐 **Flexible Layouts**: Choose between **Horizontal** (standard) or **Vertical** (sidebar style).
-- 🛠 **Pro Customization**: Set custom titles, adjust cell sizes (S to XL), and control time ranges.
-- 💳 **PromptPay & Card Support**: Easy one-time upgrade to Pro via Stripe (Localized for Thailand).
-- 🔐 **Security First**: 
+- 🔗 **Dual-Platform Sync**: Unified view of your impact across the world's leading git platforms.
+- 🎨 **12+ Premium Themes**: Choose from `Neon`, `Monokai`, `Sakura`, `Ocean`, and more.
+- 📐 **Flexible Layouts**: Standard **Horizontal** or space-saving **Vertical** (Sidebar style).
+- 🛠 **Pro Customization**: Custom titles, adjustable cell sizes (S to XL), and flexible time ranges.
+- 💳 **Localized Payments**: One-time Pro upgrade via Stripe with PromptPay support (Thailand).
+- 🔐 **Military-Grade Security**: 
   - **AES-256-GCM**: Industry-standard encryption for all stored access tokens.
   - **Token Scrubbing**: Automatic removal of plaintext tokens from the database.
-  - **XSS Protection**: Full SVG entity escaping for user-generated content.
-- 🇹🇭 **Bi-lingual Support**: Full support for English and Thai languages.
+  - **XSS Protection**: Full SVG entity escaping for safe embedding.
+- 🇹🇭 **Bi-lingual Support**: Native support for English and Thai languages.
 
 ## 🚀 Getting Started
 
@@ -26,71 +27,111 @@
 
 - Node.js 18+
 - PostgreSQL database
-- GitHub OAuth App & GitLab OAuth Application
-- Stripe Account (for Pro payments)
+- GitHub & GitLab OAuth Applications
+- Stripe Account (Optional, for Pro tier)
 
 ### Environment Variables
 
-Create a `.env` file based on our requirements:
+The project uses a split environment strategy to isolate development and production data. Create a `.env` (development) and `.env.prod` (production) file:
 
 ```env
-DATABASE_URL="postgresql://..."
+# Database (Managed via prisma.config.ts)
+POSTGRES_URL_NON_POOLING="postgresql://user:pass@localhost:5432/gitcombridge"
+POSTGRES_PRISMA_URL="postgresql://user:pass@localhost:5432/gitcombridge"
 
-# NextAuth
+# NextAuth Configuration
 NEXTAUTH_URL="http://localhost:3000"
-NEXTAUTH_SECRET="your_secret"
+NEXTAUTH_SECRET="generate_a_long_random_string"
 
-# GitHub & GitLab OAuth
-GITHUB_ID="..."
-GITHUB_SECRET="..."
-GITLAB_ID="..."
-GITLAB_SECRET="..."
+# OAuth Credentials (for Web App)
+GITHUB_ID="your_github_client_id"
+GITHUB_SECRET="your_github_client_secret"
+GITLAB_ID="your_gitlab_client_id"
+GITLAB_SECRET="your_gitlab_client_secret"
 
-# Security
-ENCRYPTION_KEY="32_byte_hex_key"
+# Local CLI / Script (Optional - for npm run generate:local)
+GITHUB_TOKEN="your_personal_access_token"
+GITLAB_TOKEN="your_personal_access_token"
+GITLAB_USERNAME="your_username"
+GITLAB_INSTANCE_URL="https://gitlab.com"
 
-# Stripe (PromptPay ready)
-STRIPE_SECRET_KEY="..."
-STRIPE_WEBHOOK_SECRET="..."
+# Security (32-byte hex key for AES-256-GCM)
+ENCRYPTION_KEY="0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+
+# Stripe Localized for Thailand (PromptPay support)
+STRIPE_SECRET_KEY="sk_test_..."
+STRIPE_WEBHOOK_SECRET="whsec_..."
+STRIPE_PRICE_ID="price_..."
 ```
 
-### Installation
+### Installation & Run
 
 ```bash
-# Install dependencies
+# 1. Start the database (using Docker)
+docker compose up -d
+
+# 2. Install dependencies
 npm install
 
-# Push database schema
+# 3. Push database schema
 npx prisma db push
 
-# Run development server
+# 4. Start development server
 npm run dev
 ```
 
+### Docker (Local Database)
+
+For local development, we provide a pre-configured `docker-compose.yml` to spin up a PostgreSQL instance:
+
+```bash
+# Start the database container
+docker compose up -d
+
+# Stop the database container
+docker compose down
+
+# Check database logs
+docker compose logs -f db
+```
+
+The database is exposed on port `5432` with the following credentials (defined in `docker-compose.yml`):
+- **User**: `postgres`
+- **Password**: `local_password`
+- **Database**: `gitcombridge`
+
+## 🛠 Developer Utilities
+
+### Local SVG Generation
+Generate a contribution graph locally without running the full web server:
+
+```bash
+# Set GH_TOKEN and GITLAB_TOKEN in your .env
+npm run generate:local
+```
+This will output `contribution-graph.svg` in the root directory.
+
 ## 📐 Parameters API
 
-Embed your graph anywhere using our dynamic API:
+Embed your dynamic graph using our optimized API endpoint:
 
 `![Graph](https://gitcombridge.com/api/graph/username?theme=neon&layout=vertical)`
 
 | Parameter | Tier | Description | Options |
 |-----------|------|-------------|---------|
 | `theme`   | Mixed | Visual style | `dark`, `light`, `neon`, `monokai`, etc. |
-| `layout`  | Pro | Graph orientation | `horizontal` (default), `vertical` |
+| `layout`  | Pro | Graph orientation | `horizontal`, `vertical` |
 | `cellSize`| Pro | Size of squares | `S`, `M`, `L`, `XL` |
 | `title`   | Pro | Custom header text | Any escaped string |
 | `weeks`   | Pro | Time range | `26`, `52`, `104` |
-| `hideWatermark` | Pro | Remove brand logo | `true` / `false` |
+| `hideWatermark` | Pro | Brand removal | `true` / `false` |
 
 ## 🛡 Security Architecture
 
-1. **Encryption**: OAuth tokens are encrypted using `AES-256-GCM` before storage. The `IV` and `AuthTag` are stored to ensure data integrity.
-2. **Server-Side Validation**: All Pro parameters are validated on the server. Free users cannot bypass restrictions via URL manipulation.
-3. **SVG Sanitization**: User titles are escaped to prevent XSS attacks within SVG documents.
-
-## 🤝 Contributing
-
-Contributions, issues, and feature requests are welcome! Feel free to check the [issues page](https://github.com/tahpapangkorn/gitcombridge/issues).
+1. **Token Isolation**: We never store plaintext OAuth tokens. All tokens are encrypted using `AES-256-GCM` with a unique Initialization Vector (IV) and Authentication Tag per record.
+2. **Database Integrity**: The `prisma.config.ts` ensures that database connections are handled strictly, preventing accidental leaks between environments.
+3. **SVG Sanitization**: Advanced sanitization ensures that even with custom titles, your embed remains XSS-free.
 
 ---
+
 Created with ❤️ by [Papangkorn PJ.](https://github.com/tahpapangkorn)
