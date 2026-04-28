@@ -5,6 +5,8 @@ agents.md
 .claude
 skills-lock.json
 
+plan.md
+
 # Logs
 logs
 *.log
