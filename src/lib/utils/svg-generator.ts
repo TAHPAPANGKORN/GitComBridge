@@ -430,11 +430,12 @@ export function generateSVG(
           0%, 100% { opacity: 1; }
           50% { opacity: 0.8; filter: brightness(1.8); }
         }
-        rect, path, circle { transform-box: fill-box; transform-origin: center; transition: all 0.2s ease-out; }
-        rect:hover, path:hover, circle:hover { 
+        .grid-container rect, .grid-container path, .grid-container circle { transform-box: fill-box; transform-origin: center; transition: all 0.2s ease-out; }
+        .grid-container rect:hover, .grid-container path:hover, .grid-container circle:hover { 
           filter: brightness(1.5) saturate(1.2); 
           transform: scale(1.1); 
           cursor: pointer;
+          z-index: 100;
         }
         
         /* Interactive Legend */
