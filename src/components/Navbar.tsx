@@ -66,7 +66,7 @@ export function Navbar() {
     <>
     <nav className="fixed top-0 left-0 right-0 z-50 border-b border-white/5 bg-background/80 backdrop-blur-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-3 group">
+        <Link href="/" className="flex items-center gap-3 group cursor-pointer">
           <div className="relative w-10 h-10 group-hover:scale-110 transition-all duration-300">
             <img 
               src="/logo.png" 
@@ -82,7 +82,7 @@ export function Navbar() {
         <div className="flex items-center gap-2">
           <button 
             onClick={toggleTheme}
-            className="p-2 hover:bg-white/5 rounded-full transition-colors text-current"
+            className="p-2 hover:bg-white/5 rounded-full transition-colors text-current cursor-pointer"
             title="Toggle Theme"
           >
             {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
@@ -90,7 +90,7 @@ export function Navbar() {
 
           <button 
             onClick={() => setLanguage(language === "EN" ? "TH" : "EN")}
-            className="flex items-center gap-1 text-sm hover:text-white transition-colors px-2"
+            className="flex items-center gap-1 text-sm hover:text-white transition-colors px-2 cursor-pointer"
           >
             <Globe className="w-4 h-4" />
             {language}
@@ -100,7 +100,7 @@ export function Navbar() {
             <div className="relative ml-2" ref={dropdownRef}>
               <button 
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                className="flex items-center gap-2 p-1 pl-3 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition-all group"
+                className="flex items-center gap-2 p-1 pl-3 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition-all group cursor-pointer"
               >
                 <span className="text-xs font-bold opacity-70 group-hover:opacity-100 transition-opacity hidden sm:block">
                   {session.user?.name?.split(' ')[0]}
@@ -155,7 +155,7 @@ export function Navbar() {
                       {userTier === 'free' && (
                         <a href="/?upgrade=1"
                           onClick={() => setIsDropdownOpen(false)}
-                          className="mt-2 flex items-center gap-1.5 text-[10px] font-bold text-purple-400 hover:text-purple-300 transition-colors">
+                          className="mt-2 flex items-center gap-1.5 text-[10px] font-bold text-purple-400 hover:text-purple-300 transition-colors cursor-pointer">
                           <Crown className="w-3 h-3" /> Upgrade to Pro — $9
                         </a>
                       )}
@@ -164,7 +164,7 @@ export function Navbar() {
                     <div className="p-2">
                       <button 
                         onClick={() => signOut()}
-                        className={`w-full flex items-center gap-3 px-4 py-3 text-xs font-medium rounded-xl transition-all ${
+                        className={`w-full flex items-center gap-3 px-4 py-3 text-xs font-medium rounded-xl transition-all cursor-pointer ${
                           theme === 'dark'
                             ? 'text-white/70 hover:text-white hover:bg-white/10'
                             : 'text-gray-600 hover:text-gray-900 hover:bg-black/5'
@@ -177,7 +177,7 @@ export function Navbar() {
                     <div className={`p-2 border-t bg-red-500/5 ${theme === 'dark' ? 'border-white/5' : 'border-black/5'}`}>
                       <button 
                         onClick={() => { setIsDropdownOpen(false); setShowDeleteModal(true); }}
-                        className="w-full flex items-center gap-3 px-4 py-3 text-xs font-medium text-red-500 hover:bg-red-500/10 rounded-xl transition-all"
+                        className="w-full flex items-center gap-3 px-4 py-3 text-xs font-medium text-red-500 hover:bg-red-500/10 rounded-xl transition-all cursor-pointer"
                       >
                         <Trash2 className="w-4 h-4" /> {t("delete_account_btn")}
                       </button>
@@ -242,7 +242,7 @@ export function Navbar() {
               <button
                 onClick={handleDeleteAccount}
                 disabled={deleteCountdown > 0 || isDeleting}
-                className={`w-full py-4 rounded-2xl font-black text-sm transition-all relative overflow-hidden ${
+                className={`w-full py-4 rounded-2xl font-black text-sm transition-all relative overflow-hidden cursor-pointer ${
                   deleteCountdown > 0 || isDeleting
                     ? 'bg-red-500/20 text-red-500/40 cursor-not-allowed'
                     : 'bg-red-500 hover:bg-red-600 text-white active:scale-95 shadow-lg shadow-red-500/30'
@@ -264,7 +264,7 @@ export function Navbar() {
               </button>
               <button
                 onClick={() => setShowDeleteModal(false)}
-                className={`w-full py-4 rounded-2xl font-bold text-sm transition-all active:scale-95 ${
+                className={`w-full py-4 rounded-2xl font-bold text-sm transition-all active:scale-95 cursor-pointer ${
                   theme === 'dark'
                     ? 'bg-white/5 hover:bg-white/10 text-white/70 hover:text-white'
                     : 'bg-black/5 hover:bg-black/10 text-gray-600 hover:text-gray-900'

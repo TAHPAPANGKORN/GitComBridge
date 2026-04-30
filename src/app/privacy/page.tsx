@@ -27,7 +27,7 @@ export default function PrivacyPage() {
       <div className="max-w-3xl mx-auto pt-40 pb-20 px-6">
         <button 
           onClick={handleBack} 
-          className="inline-flex items-center gap-2 text-sm text-github-text hover:text-white transition-colors mb-8 group"
+          className="inline-flex items-center gap-2 text-sm text-github-text hover:text-white transition-colors mb-8 group cursor-pointer"
         >
           <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
           {t("back_btn")}
@@ -63,7 +63,7 @@ export default function PrivacyPage() {
           <div className="flex justify-end pt-8 border-t border-white/5">
             <Link 
               href={fromSignin ? "/terms?from=signin" : "/terms"} 
-              className="text-sm font-bold text-purple-400 hover:text-purple-300 transition-colors flex items-center gap-2 group"
+              className="text-sm font-bold text-purple-400 hover:text-purple-300 transition-colors flex items-center gap-2 group cursor-pointer"
             >
               {t("terms_title")} <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </Link>

@@ -27,7 +27,7 @@ export default function SignIn() {
 
   return (
     <main className="min-h-screen bg-github-bg grid-bg flex flex-col items-center justify-center p-4">
-      <Link href="/" className="absolute top-8 left-8 flex items-center gap-2 text-sm text-github-text hover:text-white transition-colors group">
+      <Link href="/" className="absolute top-8 left-8 flex items-center gap-2 text-sm text-github-text hover:text-white transition-colors group cursor-pointer">
         <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
         {t("how_it_works") === "มันทำงานอย่างไร?" ? "กลับหน้าหลัก" : "Back to Home"}
       </Link>
@@ -94,8 +94,8 @@ export default function SignIn() {
             {t("footer_legal")}
           </p>
           <div className="flex justify-center gap-4 text-[10px] uppercase tracking-widest font-bold opacity-30">
-            <Link href="/terms?from=signin" className="hover:opacity-100 transition-opacity underline">{t("terms_title")}</Link>
-            <Link href="/privacy?from=signin" className="hover:opacity-100 transition-opacity underline">{t("privacy_title")}</Link>
+            <Link href="/terms?from=signin" className="hover:opacity-100 transition-opacity underline cursor-pointer">{t("terms_title")}</Link>
+            <Link href="/privacy?from=signin" className="hover:opacity-100 transition-opacity underline cursor-pointer">{t("privacy_title")}</Link>
           </div>
         </div>
       </motion.div>

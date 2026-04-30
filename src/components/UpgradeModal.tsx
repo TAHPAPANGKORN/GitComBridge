@@ -96,7 +96,7 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
             <div className="relative p-6 sm:p-10 pb-0 text-center">
               <button 
                 onClick={onClose} 
-                className={`absolute right-4 top-4 sm:right-8 sm:top-8 p-2 rounded-full transition-all ${
+                className={`absolute right-4 top-4 sm:right-8 sm:top-8 p-2 rounded-full transition-all cursor-pointer ${
                   theme === 'dark' ? 'hover:bg-white/5 text-white/30 hover:text-white' : 'hover:bg-black/5 text-black/30 hover:text-black'
                 }`}
               >
@@ -121,8 +121,8 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
                   <button key={l} onClick={() => setLang(l)}
                     className={`px-2.5 py-0.5 rounded-md text-[9px] font-black uppercase tracking-widest transition-all border ${
                       lang === l
-                        ? "border-purple-500/40 bg-purple-500/10 text-purple-400"
-                        : theme === "dark" ? "border-white/10 bg-white/5 opacity-40 hover:opacity-70" : "border-black/10 bg-black/5 opacity-40 hover:opacity-70"
+                        ? "border-purple-500/40 bg-purple-500/10 text-purple-400 cursor-pointer"
+                        : theme === "dark" ? "border-white/10 bg-white/5 opacity-40 hover:opacity-70 cursor-pointer" : "border-black/10 bg-black/5 opacity-40 hover:opacity-70 cursor-pointer"
                     }`}>{l}</button>
                 ))}
               </div>
@@ -177,7 +177,7 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
                 <button
                   onClick={handleUpgrade}
                   disabled={isLoading}
-                  className="w-full py-4 sm:py-5 rounded-2xl bg-gradient-to-r from-purple-600 via-purple-500 to-blue-600 hover:scale-[1.02] transition-all active:scale-95 shadow-[0_15px_40px_rgba(124,58,237,0.3)] disabled:opacity-60 disabled:cursor-not-allowed flex flex-col items-center justify-center group relative overflow-hidden"
+                  className="w-full py-4 sm:py-5 rounded-2xl bg-gradient-to-r from-purple-600 via-purple-500 to-blue-600 hover:scale-[1.02] transition-all active:scale-95 shadow-[0_15px_40px_rgba(124,58,237,0.3)] disabled:opacity-60 disabled:cursor-not-allowed flex flex-col items-center justify-center group relative overflow-hidden cursor-pointer"
                 >
                   {/* Glossy Overlay */}
                   <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />

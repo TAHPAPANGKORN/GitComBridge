@@ -166,7 +166,7 @@ export default function Home() {
             ? "border-purple-500/60 bg-purple-500/10 text-purple-600 dark:text-purple-300"
             : isLocked
             ? `${theme === 'dark' ? 'border-white/5 bg-white/2 opacity-50' : 'border-black/5 bg-black/2 opacity-40'} cursor-pointer hover:opacity-80`
-            : `${theme === 'dark' ? 'border-white/10 bg-white/5 hover:border-white/20' : 'border-black/10 bg-black/5 hover:border-black/20'}`
+            : `${theme === 'dark' ? 'border-white/10 bg-white/5 hover:border-white/20' : 'border-black/10 bg-black/5 hover:border-black/20'} cursor-pointer`
         } ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}
       >
         <span className={`w-2.5 h-2.5 rounded-full border shrink-0 ${theme === 'dark' ? 'border-white/20' : 'border-black/10'}`} style={{ background: t.color }} />
@@ -191,7 +191,7 @@ export default function Home() {
             className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/95 backdrop-blur-md"
             onClick={() => setIsExpanded(false)}
           >
-            <motion.button className="absolute top-8 right-8 p-3 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors">
+            <motion.button className="absolute top-8 right-8 p-3 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors cursor-pointer">
               <X className="w-6 h-6" />
             </motion.button>
             <motion.div initial={{ scale: 0.8 }} animate={{ scale: 1 }} className="w-full max-w-6xl" onClick={(e) => e.stopPropagation()}>
@@ -218,15 +218,15 @@ export default function Home() {
           </p>
           <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
             {!session ? (
-              <button onClick={() => signIn()} className="btn-gradient w-full sm:w-auto flex items-center justify-center gap-3 text-lg">
+              <button onClick={() => signIn()} className="btn-gradient w-full sm:w-auto flex items-center justify-center gap-3 text-lg cursor-pointer">
                 {t("cta_get_started")} <ChevronRight className="w-5 h-5" />
               </button>
             ) : (
-              <a href="#generator" className="btn-gradient w-full sm:w-auto flex items-center justify-center gap-3 text-lg">
+              <a href="#generator" className="btn-gradient w-full sm:w-auto flex items-center justify-center gap-3 text-lg cursor-pointer">
                 Go to Console <ChevronRight className="w-5 h-5" />
               </a>
             )}
-            <a href="#showcase" className="btn-outline w-full sm:w-auto flex items-center justify-center gap-3 text-lg">
+            <a href="#showcase" className="btn-outline w-full sm:w-auto flex items-center justify-center gap-3 text-lg cursor-pointer">
               <Eye className="w-5 h-5" /> {t("cta_view_demo")}
             </a>
           </div>
@@ -761,7 +761,7 @@ export default function Home() {
           ) : (
             <div className="text-center py-20">
                <h3 className="text-4xl font-black mb-8">{t('ready_to_sync')}</h3>
-               <button onClick={() => signIn()} className="btn-gradient inline-flex items-center gap-4 text-xl px-12 py-5">{t('get_my_graph')} <ChevronRight className="w-6 h-6" /></button>
+               <button onClick={() => signIn()} className="btn-gradient inline-flex items-center gap-4 text-xl px-12 py-5 cursor-pointer">{t('get_my_graph')} <ChevronRight className="w-6 h-6" /></button>
             </div>
           )}
         </div>
