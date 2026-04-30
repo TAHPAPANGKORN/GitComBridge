@@ -139,7 +139,7 @@ export default function Home() {
 
   const getFormattedCode = () => {
     const url = getFinalUrl(previewTheme) || "";
-    if (codeStyle === 'markdown') return `![GitComBridge Unified Graph](${url})`;
+    if (codeStyle === 'markdown') return `[GitComBridge](${url})`;
     if (codeStyle === 'html') return `<p align="center">\n  <img src="${url}" alt="GitComBridge" />\n</p>`;
     if (codeStyle === 'interactive') return `<p align="center">\n  <object type="image/svg+xml" data="${url}" width="100%"></object>\n</p>`;
     return `<p align="center">\n  <a href="${baseUrl}">\n    <img src="${url}" alt="GitComBridge" />\n  </a>\n</p>`;
