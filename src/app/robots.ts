@@ -7,6 +7,6 @@ export default function robots(): MetadataRoute.Robots {
       allow: "/",
       disallow: ["/api/", "/auth/"],
     },
-    sitemap: "https://gitcombrigde.vercel.app/sitemap.xml",
+    sitemap: "https://gitcombridge.vercel.app/sitemap.xml",
   };
 }
