@@ -3,19 +3,30 @@
 import { useLanguage } from "@/lib/contexts/LanguageContext";
 import { Navbar } from "@/components/Navbar";
 import { motion } from "framer-motion";
-import { FileText, ChevronLeft } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { FileText, ChevronLeft, ChevronRight } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 
 export default function TermsPage() {
   const { t } = useLanguage();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const fromSignin = searchParams.get("from") === "signin";
+
+  const handleBack = () => {
+    if (fromSignin) {
+      router.push("/auth/signin");
+    } else {
+      router.push("/");
+    }
+  };
 
   return (
     <main className="min-h-screen grid-bg selection:bg-gitlab-purple/30">
       <Navbar />
       <div className="max-w-3xl mx-auto pt-40 pb-20 px-6">
         <button 
-          onClick={() => router.back()} 
+          onClick={handleBack} 
           className="inline-flex items-center gap-2 text-sm text-github-text hover:text-white transition-colors mb-8 group"
         >
           <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
@@ -48,6 +59,14 @@ export default function TermsPage() {
                 <p className="text-sm">{t("terms_sub3_desc")}</p>
               </div>
             </div>
+          </div>
+          <div className="flex justify-end pt-8 border-t border-white/5">
+            <Link 
+              href={fromSignin ? "/privacy?from=signin" : "/privacy"} 
+              className="text-sm font-bold text-purple-400 hover:text-purple-300 transition-colors flex items-center gap-2 group"
+            >
+              {t("privacy_title")} <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            </Link>
           </div>
         </motion.div>
       </div>
