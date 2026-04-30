@@ -32,18 +32,22 @@ export default function PrivacyPage() {
           </div>
           <h1 className="text-4xl font-black">{t("privacy_title")}</h1>
           <div className="prose prose-invert max-w-none opacity-80 leading-relaxed space-y-8">
-             <p className="text-lg">{t("privacy_content")}</p>
-             <hr className="border-white/10" />
-             <div className="space-y-6">
-                <div className="space-y-2">
-                   <h3 className="font-bold text-white uppercase tracking-widest text-xs">{t("privacy_sub1_title")}</h3>
-                   <p className="text-sm">{t("privacy_sub1_desc")}</p>
-                </div>
-                <div className="space-y-2">
-                   <h3 className="font-bold text-white uppercase tracking-widest text-xs">{t("privacy_sub2_title")}</h3>
-                   <p className="text-sm">{t("privacy_sub2_desc")}</p>
-                </div>
-             </div>
+            <p className="text-lg">{t("privacy_content")}</p>
+            <hr className="border-white/10" />
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <h3 className="font-bold text-white uppercase tracking-widest text-xs">{t("privacy_sub1_title")}</h3>
+                <p className="text-sm">{t("privacy_sub1_desc")}</p>
+              </div>
+              <div className="space-y-2">
+                <h3 className="font-bold text-white uppercase tracking-widest text-xs">{t("privacy_sub2_title")}</h3>
+                <p className="text-sm">{t("privacy_sub2_desc")}</p>
+              </div>
+              <div className="space-y-2">
+                <h3 className="font-bold text-white uppercase tracking-widest text-xs">{t("privacy_sub3_title")}</h3>
+                <p className="text-sm">{t("privacy_sub3_desc")}</p>
+              </div>
+            </div>
           </div>
         </motion.div>
       </div>
