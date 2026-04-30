@@ -2,7 +2,7 @@ import "@/app/globals.css";
 import { Providers } from "@/components/Providers";
 import { Metadata } from "next";
 
-const BASE_URL = "https://gitcombrigde.vercel.app";
+const BASE_URL = process.env.NEXTAUTH_URL || "https://gitcombridge.vercel.app";
 
 export const metadata: Metadata = {
   metadataBase: new URL(BASE_URL),

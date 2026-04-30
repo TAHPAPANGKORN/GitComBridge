@@ -1,12 +1,14 @@
 import { MetadataRoute } from "next";
 
 export default function robots(): MetadataRoute.Robots {
+  const baseUrl = process.env.NEXTAUTH_URL || "https://gitcombridge.vercel.app";
+
   return {
     rules: {
       userAgent: "*",
       allow: "/",
-      disallow: ["/api/", "/auth/"],
+      disallow: ["/api/", "/auth/", "/privacy/", "/terms/"],
     },
-    sitemap: "https://gitcombridge.vercel.app/sitemap.xml",
+    sitemap: `${baseUrl}/sitemap.xml`,
   };
 }
