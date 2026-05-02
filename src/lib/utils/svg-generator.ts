@@ -31,51 +31,42 @@ const THEMES: Record<ThemeName, ThemeColors> = {
     gitlab: ["#ffd6d1", "#ff8a7a", "#e24329", "#a11d0a", "#7a1205"],
     merged: ["#d8b4fe", "#a855f7", "#7c3aed", "#5b21b6", "#4c1d95"],
   },
-
   ocean: {
     bg: "#0a1628", text: "#64b5f6", empty: "#112240",
     github: ["#0d3b6e", "#115293", "#1976d2", "#2196f3", "#64b5f6"],
     gitlab: ["#1a237e", "#283593", "#3949ab", "#5c6bc0", "#8c9eff"],
     merged: ["#004d40", "#00695c", "#00897b", "#00bfa5", "#1de9b6"],
   },
-
   sunset: {
     bg: "#1a0f0f", text: "#ffb74d", empty: "#2d1a1a",
     github: ["#4e200c", "#8d3813", "#d8561c", "#ff7043", "#ff9e80"],
     gitlab: ["#4a1111", "#8b1c1c", "#d32f2f", "#ef5350", "#ff8a80"],
     merged: ["#4a144a", "#7b1fa2", "#ab47bc", "#e066ff", "#ea80fc"],
   },
-
   neon: {
     bg: "#050505", text: "#00ffcc", empty: "#141414",
     github: ["#003322", "#006644", "#00cc88", "#00ffcc", "#aaffff"],
     gitlab: ["#330011", "#660022", "#cc0044", "#ff0055", "#ff6699"],
     merged: ["#110033", "#220066", "#4400cc", "#7700ff", "#b366ff"],
   },
-
   monokai: {
     bg: "#272822", text: "#f8f8f2", empty: "#3e3d32",
     github: ["#2b3618", "#4d6521", "#74982a", "#a6e22e", "#c4f068"],
     gitlab: ["#38111d", "#741b39", "#b92055", "#f92672", "#fc689d"],
     merged: ["#1b343a", "#295b68", "#4292a8", "#66d9ef", "#9aebfa"],
   },
-
-
   matcha: {
     bg: "#1e201e", text: "#e0e0c5", empty: "#2c302c",
     github: ["#283618", "#384a20", "#4c6926", "#606c38", "#a3b18a"],
     gitlab: ["#4a2c11", "#754013", "#bc6c25", "#dda15e", "#fefae0"],
     merged: ["#183630", "#215247", "#2d7a68", "#40a38d", "#7acfc0"],
   },
-
-  // Pro Light Themes
   sakura: {
     bg: "#fff5f8", text: "#885566", empty: "#ffe4ee",
     github: ["#ffcce0", "#ffa6c9", "#ff80b3", "#ff599c", "#f03284"],
     gitlab: ["#ffd9d6", "#ffb3ad", "#fc8880", "#eb5d54", "#cc3e35"],
     merged: ["#e8dcff", "#c8b3fa", "#a88cf0", "#8663de", "#633eb3"],
   },
-
   snow: {
     bg: "#ffffff", text: "#334155", empty: "#f1f5f9",
     github: ["#dcfce7", "#86efac", "#4ade80", "#16a34a", "#14532d"],
@@ -175,47 +166,39 @@ export function generateSVG(
   const gap = Math.max(2, Math.round(cellSizeVal * 0.2));
 
   const isVertical = layout === "vertical";
-  const leftPadding = isVertical ? 75 : 40; // More space for months in vertical
+  const leftPadding = isVertical ? 75 : 40;
   const rightPadding = 40;
   const topPadding = title ? 60 : 40;
-  const footerHeight = isVertical ? 100 : 45; // Taller footer for vertical to avoid overlap
+  const footerHeight = isVertical ? 100 : 45;
   const watermarkHeight = (!hideWatermark && !isPro) ? 20 : 0;
 
-  // 🌐 Get current date in requested timezone
   const now = new Date(new Date().toLocaleString("en-US", { timeZone: timezone }));
   now.setHours(0, 0, 0, 0);
 
   const startDate = subDays(now, (weeks * 7) - 1);
-  const calendarStart = startOfWeek(startDate); // Defaults to Sunday
+  const calendarStart = startOfWeek(startDate);
   const daysInterval = eachDayOfInterval({ start: calendarStart, end: now });
 
-  // Use actual week count from interval for accurate dimensions
   const actualWeeks = Math.ceil(daysInterval.length / 7);
 
-  // --- DIMENSIONS & SPACING ---
   const isIsometric = viewMode === "isometric";
   const isoGap = gap * 0.5;
 
-  // Calculate dynamic dimensions based on layout
   const gridWidth = isVertical ? (7 * (cellSizeVal + gap)) - gap : (actualWeeks * (cellSizeVal + gap)) - gap;
   const gridHeight = isVertical ? (actualWeeks * (cellSizeVal + gap)) - gap : (7 * (cellSizeVal + gap)) - gap;
   
   let width = gridWidth + leftPadding + rightPadding;
   let height = gridHeight + topPadding + footerHeight + watermarkHeight;
 
-  // Increase canvas for Isometric view to prevent clipping
   if (isIsometric) {
     width = Math.max(width, (actualWeeks + 7) * (cellSizeVal * 0.9 + isoGap) + 100);
     height = Math.max(height, (actualWeeks + 7) * (cellSizeVal * 0.5 + isoGap / 2) + topPadding + footerHeight + 100);
   }
 
   const contributions = mergeContributions(githubData, gitlabData);
-  const counts = Object.values(contributions).filter(c => c > 0);
-  const maxVal = counts.length > 0 ? Math.max(...counts) : 1;
 
   const getLevel = (count: number) => {
     if (count === 0) return 0;
-    // Fixed thresholds as requested
     if (count >= 10) return 4;
     if (count >= 6) return 3;
     if (count >= 3) return 2;
@@ -227,15 +210,12 @@ export function generateSVG(
     const level = getLevel(count);
     if (level === 0) return colors.empty;
 
-    const idx = level - 1; // 0-4 index for the 5-color arrays
+    const idx = level - 1;
     if (gitlabData[date] && githubData[date]) return colors.merged[idx];
     if (gitlabData[date]) return colors.gitlab[idx];
     return colors.github[idx];
   };
 
-  // --- GRID RENDERING ---
-
-  // Prepare all days first to allow sorting for Isometric Z-order
   const gridData = daysInterval.map((day, i) => {
     const dateStr = format(day, "yyyy-MM-dd");
     const dayInWeek = i % 7;
@@ -251,7 +231,6 @@ export function generateSVG(
     return { day, dateStr, dayInWeek, weekIdx, count, level, color, type, i };
   });
 
-  // Sort for Isometric: Back-to-Front (Smaller week + day first)
   if (isIsometric) {
     gridData.sort((a, b) => (a.weekIdx + a.dayInWeek) - (b.weekIdx + b.dayInWeek));
   }
@@ -264,7 +243,6 @@ export function generateSVG(
     const { dayInWeek, weekIdx, color, count, level, type, i } = item;
     const typeClass = `type-${type}`;
 
-    
     let animationStyle = "";
     if (animation !== "none" && count > 0) {
       const delay = animation === "wave" ? (weekIdx * 0.1).toFixed(2) : 
@@ -280,18 +258,12 @@ export function generateSVG(
     }
 
     if (isIsometric) {
-      // 📐 Isometric Projection (Z-Sorted & Perfectly Centered)
-      // Range of (weekIdx - dayInWeek) is approx -6 to 52, midpoint is ~23
-      // Range of (weekIdx + dayInWeek) is approx 0 to 58, midpoint is ~29
       const midW = (weeks - 1) / 2;
       const midD = 3;
-      
       const factorX = cellSizeVal * 0.9 + isoGap;
       const factorY = cellSizeVal * 0.45 + isoGap / 2;
-      
       const isoX = width / 2 + (weekIdx - dayInWeek - (midW - midD)) * factorX;
       const isoY = (height - footerHeight) / 2 + (weekIdx + dayInWeek - (midW + midD)) * factorY + 20;
-      
       const h = count > 0 ? Math.max(6, level * (cellSizeVal / 2)) : 2; 
       const topColor = color;
       const rightColor = darkenColor(color, 40);
@@ -302,10 +274,8 @@ export function generateSVG(
         gridItems += `<path d="M${isoX} ${isoY} L${isoX - cellSizeVal * 0.9} ${isoY - cellSizeVal * 0.45} L${isoX - cellSizeVal * 0.9} ${isoY - cellSizeVal * 0.45 - h} L${isoX} ${isoY - h} Z" fill="${leftColor}" stroke="${strokeColor}" stroke-width="0.1" class="lvl-${level} ${typeClass}" />\n`;
         gridItems += `<path d="M${isoX} ${isoY} L${isoX + cellSizeVal * 0.9} ${isoY - cellSizeVal * 0.45} L${isoX + cellSizeVal * 0.9} ${isoY - cellSizeVal * 0.45 - h} L${isoX} ${isoY - h} Z" fill="${rightColor}" stroke="${strokeColor}" stroke-width="0.1" class="lvl-${level} ${typeClass}" />\n`;
       }
-      
       gridItems += `<path d="M${isoX} ${isoY - h} L${isoX + cellSizeVal * 0.9} ${isoY - h - cellSizeVal * 0.45} L${isoX} ${isoY - h - cellSizeVal * 0.9} L${isoX - cellSizeVal * 0.9} ${isoY - h - cellSizeVal * 0.45} Z" fill="${topColor}" stroke="${strokeColor}" stroke-width="0.1" class="lvl-${level} ${typeClass}" ${animationStyle} />\n`;
     } else {
-      // 🟦 Standard Flat View
       const x = isVertical ? offsetX + dayInWeek * (cellSizeVal + gap) : offsetX + weekIdx * (cellSizeVal + gap);
       const y = isVertical ? offsetY + weekIdx * (cellSizeVal + gap) : offsetY + dayInWeek * (cellSizeVal + gap);
 
@@ -327,13 +297,11 @@ export function generateSVG(
   const days = ["Mon", "Wed", "Fri"];
 
   if (isVertical) {
-    // Days Header (Narrow)
     days.forEach((day, i) => {
       const x = offsetX + (i * 2 + 1) * (cellSizeVal + gap);
       labels += `<text x="${x + cellSizeVal / 2}" y="${offsetY - 8}" font-size="8" fill="${colors.text}" text-anchor="middle" font-weight="bold">${day}</text>\n`;
     });
 
-    // Vertical Month Labels
     let lastMonth = -1;
     for (let w = 0; w < weeks; w++) {
       const currentDate = new Date(startDate);
@@ -348,23 +316,21 @@ export function generateSVG(
   } else {
     let lastMonth = -1;
     if (isIsometric) {
-      // Month labels along the Bottom-Right edge
       const midW = (weeks - 1) / 2;
       const midD = 3;
       const factorX = cellSizeVal * 0.9 + isoGap;
       const factorY = cellSizeVal * 0.45 + isoGap / 2;
 
       let lastLabelW = -99;
-      const minWeekGap = cellSizeVal < 12 ? 5 : 3; // Need more weeks gap for smaller cells
+      const minWeekGap = cellSizeVal < 12 ? 5 : 3;
 
       for (let w = 0; w < weeks; w++) {
         const currentDate = new Date(startDate);
         currentDate.setDate(startDate.getDate() + (w * 7));
         const month = currentDate.getMonth();
         
-        // Only show month if it's a new month AND far enough from the last label
         if (month !== lastMonth && (w - lastLabelW) >= minWeekGap) {
-          const labelOffset = cellSizeVal < 12 ? 12.5 : 9.5; // More offset for smaller cells
+          const labelOffset = cellSizeVal < 12 ? 12.5 : 9.5;
           const isoX = width / 2 + (w - labelOffset - (midW - midD)) * factorX;
           const isoY = (height - footerHeight) / 2 + (w + labelOffset - (midW + midD)) * factorY;
           const fontSize = cellSizeVal < 12 ? 7 : 8; 
@@ -375,11 +341,10 @@ export function generateSVG(
         }
       }
 
-      // Day labels along the Bottom-Left edge
       const daysAbbr = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
       daysAbbr.forEach((day, d) => {
-        if (d % 2 === 0) { // Show Sun, Tue, Thu, Sat
-          const labelOffset = cellSizeVal < 12 ? -3.5 : -1.8; // More offset for smaller cells
+        if (d % 2 === 0) {
+          const labelOffset = cellSizeVal < 12 ? -3.5 : -1.8;
           const isoX = width / 2 + (labelOffset - d - (midW - midD)) * factorX;
           const isoY = (height - footerHeight) / 2 + (labelOffset + d - (midW + midD)) * factorY;
           const fontSize = cellSizeVal < 12 ? 7 : 8;
@@ -411,8 +376,7 @@ export function generateSVG(
   return `
     <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">
       <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&amp;display=swap');
-        text { font-family: 'Inter', sans-serif; }
+        text { font-family: Inter, system-ui, -apple-system, sans-serif; }
         @keyframes pulse {
           0% { opacity: 1; }
           50% { opacity: 0.6; }
@@ -438,10 +402,8 @@ export function generateSVG(
           z-index: 100;
         }
         
-        /* Interactive Legend */
         .legend-item { cursor: pointer; }
         
-        /* When any legend item is hovered, dim the whole grid */
         .legend-item:hover ~ .grid-container rect,
         .legend-item:hover ~ .grid-container path,
         .legend-item:hover ~ .grid-container circle {
@@ -450,7 +412,6 @@ export function generateSVG(
           transition: all 0.4s ease;
         }
         
-        /* Highlight specific levels */
         .l0:hover ~ .grid-container .lvl-0,
         .l1:hover ~ .grid-container .lvl-1,
         .l2:hover ~ .grid-container .lvl-2,
@@ -464,7 +425,6 @@ export function generateSVG(
           transform: scale(1.05);
         }
         
-        /* Dim labels when legend is hovered */
         .legend-item:hover ~ .labels-container {
           opacity: 0.3;
           filter: blur(0.5px);
@@ -474,7 +434,6 @@ export function generateSVG(
       <rect width="100%" height="100%" fill="${colors.bg}" rx="8" />
       ${title ? `<text x="${width / 2}" y="35" font-size="18" font-weight="900" fill="${colors.text}" text-anchor="middle">${escapeHtml(title)}</text>` : ""}
       
-      <!-- Legend (Direct Siblings) -->
       ${(() => {
         const lx = isVertical ? (width - 150) / 2 : offsetX;
         const ly = isVertical ? height - 80 : height - footerHeight + 25;
